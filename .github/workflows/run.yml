@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        uses: actions/setup-node@v
+      - uses: actions/setup-node@v
         with:
           node-version: 14
       - name: Run script
