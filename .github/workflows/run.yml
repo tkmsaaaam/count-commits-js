@@ -1,0 +1,22 @@
+name: CountCommits
+
+on:
+  schedule:
+    - cron: '37 11 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  script:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        uses: actions/setup-node@v
+        with:
+          node-version: 14
+      - name: Run script
+        run : |
+          npm install
+          npm run start ${{ secrets.USER_NAME }} ${{ secrets.TOKEN_FOR_BOT }} ${{ secrets.CHANNEL_ID }}
