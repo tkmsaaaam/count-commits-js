@@ -3,9 +3,9 @@ import { WebClient } from '@slack/web-api';
 export default (count) => {
   let message = '';
   if (count == 0) {
-    message = `<!channel> 今日はまだコミットをしていません!\ñhttps://github.com/${process.argv[2]}`;
+    message = `<!channel> 今日はまだコミットをしていません!\nhttps://github.com/${process.argv[2]}`;
   } else {
-    message = `今日のコミット数は${count}\ñhttps://github.com/${process.argv[2]}`;
+    message = `今日のコミット数は${count}\nhttps://github.com/${process.argv[2]}`;
   }
 
   const token = process.argv[3];
