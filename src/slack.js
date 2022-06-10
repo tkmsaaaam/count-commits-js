@@ -6,7 +6,7 @@ export default (count) => {
     message = `<!channel> 今日はまだコミットをしていません!`;
   } else {
     message = `今日のコミット数は${count}`;
-  };
+  }
 
   const token = process.argv[3];
   const web = new WebClient(token);
