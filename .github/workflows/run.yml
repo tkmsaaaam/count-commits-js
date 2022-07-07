@@ -20,3 +20,4 @@ jobs:
         run : |
           npm install
           npm run start ${{ secrets.USER_NAME }} ${{ secrets.TOKEN_FOR_BOT }} ${{ secrets.CHANNEL_ID }}
+        timeout-minutes: 1
