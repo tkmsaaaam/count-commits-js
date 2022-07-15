@@ -209,24 +209,21 @@ type Commits []struct {
 	Parents Parents `json:"parents"`
 }
 
-func main() {
-	userName := os.Args[1]
-	url := "https://api.github.com/users/" + userName + "/repos"
-
+func requestApi(url string) ([]byte, error){
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
 	client := new(http.Client)
 	resp, err := client.Do(req)
 
 	if err != nil {
 		fmt.Println("Error Request:", err)
-		return
+		return nil, err
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		fmt.Println("Error Response:", resp.Status)
-		return
+		return nil, err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -234,11 +231,25 @@ func main() {
 		log.Fatalf("ioutil.ReadAll err=%s", err.Error())
 	}
 
+	return body, nil
+}
+
+func main() {
+	userName := os.Args[1]
+	url := "https://api.github.com/users/" + userName + "/repos"
+
+	body, err := requestApi(url)
+
+	if err != nil {
+		fmt.Println("Error Request API")
+	}
+
 	var repositories Repositories
 
 	if err = json.Unmarshal(body, &repositories); err != nil {
 		log.Fatalf("json.Unmarshal err=%s", err.Error())
 	}
+	
 	counts := 0
 	now := time.Now()
 
@@ -247,27 +258,12 @@ func main() {
 
 		url := "https://api.github.com/repos/" +userName + "/" + name + "/commits"
 
-		req, _ := http.NewRequest(http.MethodGet, url, nil)
-		client := new(http.Client)
-		resp, err := client.Do(req)
+		body, err := requestApi(url)
 
 		if err != nil {
-			fmt.Println("Error Request:", err)
-			return
+			fmt.Println("Error Request API")
 		}
 
-		defer resp.Body.Close()
-
-		if resp.StatusCode != 200 {
-			fmt.Println("Error Response:", resp.Status)
-			return
-		}
-	
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatalf("ioutil.ReadAll err=%s", err.Error())
-		}
-	
 		var commits Commits
 	
 		if err = json.Unmarshal(body, &commits); err != nil {
