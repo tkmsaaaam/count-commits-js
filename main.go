@@ -283,7 +283,6 @@ func main() {
 			}
 		}
 	}
-	fmt.Println(counts)
 
 	tkn := os.Args[2]
 	c := slack.New(tkn)
