@@ -2,13 +2,13 @@ package main
 
 import (
 	"encoding/json"
-	"net/http"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"time"
+	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/slack-go/slack"
 )
@@ -35,12 +35,12 @@ type Owner struct {
 }
 
 type Repositories []struct {
-	ID       int    `json:"id"`
-	NodeID   string `json:"node_id"`
-	Name     string `json:"name"`
-	FullName string `json:"full_name"`
-	Private  bool   `json:"private"`
-	Owner    Owner `json:"owner"`
+	ID                       int           `json:"id"`
+	NodeID                   string        `json:"node_id"`
+	Name                     string        `json:"name"`
+	FullName                 string        `json:"full_name"`
+	Private                  bool          `json:"private"`
+	Owner                    Owner         `json:"owner"`
 	HTMLURL                  string        `json:"html_url"`
 	Description              interface{}   `json:"description"`
 	Fork                     bool          `json:"fork"`
@@ -140,16 +140,16 @@ type Verification struct {
 }
 
 type Commit struct {
-	Author CommitAuthor `json:"author"`
-	Committer CommitCommitter `json:"committer"`
-	Message string `json:"message"`
-	Tree    Tree `json:"tree"`
-	URL          string `json:"url"`
-	CommentCount int    `json:"comment_count"`
-	Verification Verification `json:"verification"`
+	Author       CommitAuthor    `json:"author"`
+	Committer    CommitCommitter `json:"committer"`
+	Message      string          `json:"message"`
+	Tree         Tree            `json:"tree"`
+	URL          string          `json:"url"`
+	CommentCount int             `json:"comment_count"`
+	Verification Verification    `json:"verification"`
 }
 
-type Author      struct {
+type Author struct {
 	Login             string `json:"login"`
 	ID                int    `json:"id"`
 	NodeID            string `json:"node_id"`
@@ -198,18 +198,18 @@ type Parents []struct {
 }
 
 type Commits []struct {
-	Sha    string `json:"sha"`
-	NodeID string `json:"node_id"`
-	Commit Commit `json:"commit"`
-	URL         string `json:"url"`
-	HTMLURL     string `json:"html_url"`
-	CommentsURL string `json:"comments_url"`
-	Author      Author `json:"author"`
-	Committer Committer `json:"committer"`
-	Parents Parents `json:"parents"`
+	Sha         string    `json:"sha"`
+	NodeID      string    `json:"node_id"`
+	Commit      Commit    `json:"commit"`
+	URL         string    `json:"url"`
+	HTMLURL     string    `json:"html_url"`
+	CommentsURL string    `json:"comments_url"`
+	Author      Author    `json:"author"`
+	Committer   Committer `json:"committer"`
+	Parents     Parents   `json:"parents"`
 }
 
-func requestApi(url string) ([]byte, error){
+func requestApi(url string) ([]byte, error) {
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
 	client := new(http.Client)
 	resp, err := client.Do(req)
@@ -269,14 +269,14 @@ func main() {
 	if err = json.Unmarshal(body, &repositories); err != nil {
 		log.Fatalf("json.Unmarshal err=%s", err.Error())
 	}
-	
+
 	counts := 0
 	now := time.Now()
 
 	for _, repo := range repositories {
 		name := repo.Name
 
-		url := "https://api.github.com/repos/" +userName + "/" + name + "/commits"
+		url := "https://api.github.com/repos/" + userName + "/" + name + "/commits"
 
 		body, err := requestApi(url)
 
@@ -285,14 +285,14 @@ func main() {
 		}
 
 		var commits Commits
-	
+
 		if err = json.Unmarshal(body, &commits); err != nil {
 			log.Fatalf("json.Unmarshal err=%s", err.Error())
 		}
 
 		for j := range commits {
 			date := commits[j].Commit.Author.Date
-			if (date.Year() == now.Year() &&  date.Month() == now.Month() && date.Day() == now.Day()) {
+			if date.Year() == now.Year() && date.Month() == now.Month() && date.Day() == now.Day() {
 				counts += 1
 			} else {
 				break
