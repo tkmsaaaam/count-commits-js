@@ -272,7 +272,15 @@ func main() {
 	tkn := os.Args[2]
 	c := slack.New(tkn)
 
-	message := "今日のコミット数は" + strconv.Itoa(counts)
+	var message string
+
+	if counts == 0 {
+		message = "<!channel>今日はまだコミットしていません！"
+	} else {
+		message = "今日のコミット数は" + strconv.Itoa(counts)
+	}
+
+	message += "\nhttps://github.com/" + userName
 
 	_, _, err = c.PostMessage(os.Args[3], slack.MsgOptionText(message, true))
 	if err != nil {
