@@ -234,6 +234,26 @@ func requestApi(url string) ([]byte, error){
 	return body, nil
 }
 
+func postSlack(counts int, userName string) {
+	tkn := os.Args[2]
+	c := slack.New(tkn)
+
+	var message string
+
+	if counts == 0 {
+		message = "<!channel>今日はまだコミットしていません！"
+	} else {
+		message = "今日のコミット数は" + strconv.Itoa(counts)
+	}
+
+	message += "\nhttps://github.com/" + userName
+
+	_, _, err := c.PostMessage(os.Args[3], slack.MsgOptionText(message, true))
+	if err != nil {
+		panic(err)
+	}
+}
+
 func main() {
 	userName := os.Args[1]
 	url := "https://api.github.com/users/" + userName + "/repos"
@@ -279,22 +299,5 @@ func main() {
 			}
 		}
 	}
-
-	tkn := os.Args[2]
-	c := slack.New(tkn)
-
-	var message string
-
-	if counts == 0 {
-		message = "<!channel>今日はまだコミットしていません！"
-	} else {
-		message = "今日のコミット数は" + strconv.Itoa(counts)
-	}
-
-	message += "\nhttps://github.com/" + userName
-
-	_, _, err = c.PostMessage(os.Args[3], slack.MsgOptionText(message, true))
-	if err != nil {
-		panic(err)
-	}
+	postSlack(counts, userName)
 }
