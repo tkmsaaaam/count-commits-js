@@ -1,4 +1,4 @@
-module example.com/m/v2
+module count-commits-js
 
 go 1.18
 
