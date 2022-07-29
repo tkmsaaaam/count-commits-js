@@ -241,7 +241,7 @@ func postSlack(counts int, userName string) {
 	var message string
 
 	if counts == 0 {
-		message = "<!channel>今日はまだコミットしていません！"
+		message = "<!channel> 今日はまだコミットしていません！"
 	} else {
 		message = "今日のコミット数は" + strconv.Itoa(counts)
 	}
