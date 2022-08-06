@@ -248,7 +248,7 @@ func postSlack(counts int, userName string) {
 
 	message += "\nhttps://github.com/" + userName
 
-	_, _, err := c.PostMessage(os.Args[3], slack.MsgOptionText(message, true))
+	_, _, err := c.PostMessage(os.Args[3], slack.MsgOptionText(message, false))
 	if err != nil {
 		panic(err)
 	}
