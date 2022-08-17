@@ -4,16 +4,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/go-github/v45/github"
+	"github.com/slack-go/slack"
 	"os"
 	"strconv"
 	"time"
-
-	"github.com/slack-go/slack"
 )
 
 func postSlack(counts int, userName string) {
-	tkn := os.Args[2]
-	c := slack.New(tkn)
+	c := slack.New(os.Args[2])
 
 	var message string
 
@@ -27,6 +25,7 @@ func postSlack(counts int, userName string) {
 
 	_, _, err := c.PostMessage(os.Args[3], slack.MsgOptionText(message, false))
 	if err != nil {
+		fmt.Println(err)
 		panic(err)
 	}
 }
@@ -41,6 +40,8 @@ func main() {
 
 	if err != nil {
 		fmt.Println("Error can't get repositories")
+		fmt.Println(err)
+		panic(err)
 	}
 
 	counts := 0
@@ -54,6 +55,8 @@ func main() {
 
 		if err != nil {
 			fmt.Println("Error can't get commits")
+			fmt.Println(err)
+			panic(err)
 		}
 
 		for _, repositoryCommit := range repositoryCommits {
