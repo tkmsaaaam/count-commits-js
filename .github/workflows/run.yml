@@ -11,6 +11,8 @@ permissions:
 jobs:
   script:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/setup-go@v2
         with:
@@ -26,5 +28,5 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Run script
-        run : go run main.go ${{ secrets.USER_NAME }} ${{ secrets.TOKEN_FOR_BOT }} ${{ secrets.CHANNEL_ID }}
+        run : go run main.go ${{ secrets.USER_NAME }} ${{ secrets.TOKEN_FOR_BOT }} ${{ secrets.CHANNEL_ID }} ${{ secrets.GITHUB_TOKEN }}
         timeout-minutes: 1

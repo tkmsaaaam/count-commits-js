@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/google/go-github/v45/github"
 	"github.com/slack-go/slack"
+	"golang.org/x/oauth2"
 	"os"
 	"strconv"
 	"time"
@@ -33,10 +34,15 @@ func postSlack(counts int, userName string) {
 func main() {
 	userName := os.Args[1]
 
-	client := github.NewClient(nil)
+	ctx := context.Background()
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: os.Args[4]},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+	client := github.NewClient(tc)
 
 	opt := &github.RepositoryListOptions{Type: "public"}
-	repos, _, err := client.Repositories.List(context.Background(), userName, opt)
+	repos, _, err := client.Repositories.List(ctx, "", opt)
 
 	if err != nil {
 		fmt.Println("Error can't get repositories")
@@ -51,7 +57,7 @@ func main() {
 		repoName := *repo.Name
 
 		opt := &github.CommitsListOptions{}
-		repositoryCommits, _, err := client.Repositories.ListCommits(context.Background(), userName, repoName, opt)
+		repositoryCommits, _, err := client.Repositories.ListCommits(ctx, userName, repoName, opt)
 
 		if err != nil {
 			fmt.Println("Error can't get commits")
