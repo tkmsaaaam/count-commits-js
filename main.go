@@ -34,10 +34,9 @@ func main() {
 	userName := os.Args[1]
 
 	client := github.NewClient(nil)
+	ctx := context.Background()
 
-	opt := &github.RepositoryListOptions{Type: "public"}
-	repos, _, err := client.Repositories.List(context.Background(), userName, opt)
-
+	repos, _, err := client.Repositories.List(ctx, userName, &github.RepositoryListOptions{Type: "public"})
 	if err != nil {
 		fmt.Println("Error can't get repositories")
 		fmt.Println(err)
@@ -50,9 +49,7 @@ func main() {
 	for _, repo := range repos {
 		repoName := *repo.Name
 
-		opt := &github.CommitsListOptions{}
-		repositoryCommits, _, err := client.Repositories.ListCommits(context.Background(), userName, repoName, opt)
-
+		repositoryCommits, _, err := client.Repositories.ListCommits(ctx, userName, repoName, &github.CommitsListOptions{})
 		if err != nil {
 			fmt.Println("Error can't get commits")
 			fmt.Println(err)
