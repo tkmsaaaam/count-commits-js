@@ -1,22 +1,19 @@
 name: CountCommits
-
 on:
   schedule:
     - cron: '37 11 * * *'
   workflow_dispatch:
-
 permissions: {}
-
 jobs:
   script:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v3
         with:
           go-version: ^1.19
         id: go
       - name: check out
         uses: actions/checkout@v3
       - name: Run script
-        run : go run main.go ${{ secrets.USER_NAME }} ${{ secrets.TOKEN_FOR_BOT }} ${{ secrets.CHANNEL_ID }}
+        run: go run main.go ${{ secrets.USER_NAME }} ${{ secrets.TOKEN_FOR_BOT }} ${{ secrets.CHANNEL_ID }}
         timeout-minutes: 1
