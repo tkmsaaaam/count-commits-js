@@ -4,29 +4,37 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/go-github/v45/github"
+	"github.com/shurcooL/graphql"
 	"github.com/slack-go/slack"
+	"golang.org/x/oauth2"
 	"os"
 	"time"
 )
 
-func postSlack(counts int, userName string) {
+func postSlack(message string) {
 	c := slack.New(os.Args[2])
-
-	var message string
-
-	if counts == 0 {
-		message = "<!channel> 今日はまだコミットしていません！"
-	} else {
-		message = "今日のコミット数は" + fmt.Sprint(counts)
-	}
-
-	message += "\nhttps://github.com/" + userName
 
 	_, _, err := c.PostMessage(os.Args[3], slack.MsgOptionText(message, false))
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+}
+
+var query struct {
+	User struct {
+		ContributionsCollection struct {
+			ContributionCalendar struct {
+				TotalContributions graphql.Int
+				Weeks              []struct {
+					ContributionDays []struct {
+						ContributionCount int
+						Date              string
+					}
+				}
+			}
+		}
+	} `graphql:"user(login: $name)"`
 }
 
 func main() {
@@ -64,5 +72,53 @@ func main() {
 			}
 		}
 	}
-	postSlack(counts, userName)
+
+	var message string
+
+	if counts == 0 {
+		message = "<!channel> 今日はまだコミットしていません！"
+	} else {
+		message = "今日のコミット数は" + fmt.Sprint(counts)
+	}
+
+	key := os.Args[4]
+	src := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: key},
+	)
+	httpClient := oauth2.NewClient(context.Background(), src)
+
+	graphqlClient := graphql.NewClient("https://api.github.com/graphql", httpClient)
+
+	variables := map[string]interface{}{
+		"name": graphql.String(userName),
+	}
+	graphqlErr := graphqlClient.Query(context.Background(), &query, variables)
+	if graphqlErr != nil {
+		fmt.Println(err)
+	}
+	weeksLen := len(query.User.ContributionsCollection.ContributionCalendar.Weeks)
+	var countDays = 0
+	var countCommitsToday int
+out:
+	for i := weeksLen - 1; i >= 0; i-- {
+		daysLen := len(query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays)
+		for j := daysLen - 1; j >= 0; j-- {
+			day := query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays[j]
+			if time.Now().Format("2006-01-02") == day.Date {
+				countCommitsToday = day.ContributionCount
+				continue
+			}
+			if day.ContributionCount == 0 {
+				break out
+			} else {
+				countDays++
+			}
+		}
+	}
+
+	message += "\n---" + "\n連続コミット日数は" + fmt.Sprint(countDays) + "\n今日のコミット数は" + fmt.Sprint(countCommitsToday) + "\n---"
+
+	message += "\nhttps://github.com/" + userName
+
+	postSlack(message)
 }

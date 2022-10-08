@@ -15,5 +15,5 @@ jobs:
       - name: check out
         uses: actions/checkout@v3
       - name: Run script
-        run: go run main.go ${{ secrets.USER_NAME }} ${{ secrets.TOKEN_FOR_BOT }} ${{ secrets.CHANNEL_ID }}
+        run: go run main.go ${{ secrets.USER_NAME }} ${{ secrets.TOKEN_FOR_BOT }} ${{ secrets.CHANNEL_ID }} ${{ secrets.ACCESS_TOKEN }}
         timeout-minutes: 1
