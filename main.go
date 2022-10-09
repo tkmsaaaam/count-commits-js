@@ -65,7 +65,7 @@ func main() {
 
 		for _, repositoryCommit := range repositoryCommits {
 			date := repositoryCommit.Commit.Author.Date
-			if date.Year() == now.Year() && date.Month() == now.Month() && date.Day() == now.Day() {
+			if date.Format("2006-01-02") == now.Format("2006-01-02") {
 				counts += 1
 			} else {
 				break
@@ -81,9 +81,8 @@ func main() {
 		message = "今日のコミット数は" + fmt.Sprint(counts)
 	}
 
-	key := os.Args[4]
 	src := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: key},
+		&oauth2.Token{AccessToken: os.Args[4]},
 	)
 	httpClient := oauth2.NewClient(context.Background(), src)
 
@@ -104,7 +103,7 @@ out:
 		daysLen := len(query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays)
 		for j := daysLen - 1; j >= 0; j-- {
 			day := query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays[j]
-			if time.Now().Format("2006-01-02") == day.Date {
+			if now.Format("2006-01-02") == day.Date {
 				countCommitsToday = day.ContributionCount
 				continue
 			}
@@ -114,6 +113,10 @@ out:
 				countDays++
 			}
 		}
+	}
+
+	if countCommitsToday != 0 {
+		countDays++
 	}
 
 	message += "\n---" + "\n連続コミット日数は" + fmt.Sprint(countDays) + "\n今日のコミット数は" + fmt.Sprint(countCommitsToday) + "\n---"
