@@ -93,7 +93,7 @@ func main() {
 	}
 	graphqlErr := graphqlClient.Query(context.Background(), &query, variables)
 	if graphqlErr != nil {
-		fmt.Println(err)
+		fmt.Println(graphqlErr)
 	}
 	weeksLen := len(query.User.ContributionsCollection.ContributionCalendar.Weeks)
 	var countDays = 0
