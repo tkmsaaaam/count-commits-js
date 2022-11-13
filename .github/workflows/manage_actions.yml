@@ -8,6 +8,8 @@ jobs:
   script:
     runs-on: ubuntu-latest
     steps:
+      - name: checkout self repo
+        uses: actions/checkout@v3
       - name: disable self action
         run: gh workflow disable "ManageActions"
         env:
