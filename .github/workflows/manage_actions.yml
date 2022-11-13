@@ -1,0 +1,18 @@
+name: ManageActions
+on:
+  schedule:
+    - cron: '12 12 1 * *'
+  workflow_dispatch:
+permissions: {}
+jobs:
+  script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: disable self action
+        run: gh workflow disable "ManageActions"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: enable self action
+        run: gh workflow enable "ManageActions"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
