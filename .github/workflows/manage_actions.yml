@@ -19,3 +19,11 @@ jobs:
         run: gh workflow enable "ManageActions"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: disable target action
+        run: gh workflow disable "CountCommits"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: enable target action
+        run: gh workflow enable "CountCommits"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
