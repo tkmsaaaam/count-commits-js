@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/google/go-github/v45/github"
+	"github.com/google/go-github/github"
 	"github.com/shurcooL/graphql"
 	"github.com/slack-go/slack"
 	"golang.org/x/oauth2"
