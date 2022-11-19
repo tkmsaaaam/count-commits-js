@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/google/go-github/github"
 	"github.com/shurcooL/graphql"
 	"github.com/slack-go/slack"
 	"golang.org/x/oauth2"
@@ -38,49 +37,6 @@ var query struct {
 }
 
 func main() {
-	userName := os.Args[1]
-
-	client := github.NewClient(nil)
-	ctx := context.Background()
-
-	repos, _, err := client.Repositories.List(ctx, userName, &github.RepositoryListOptions{Type: "public"})
-	if err != nil {
-		fmt.Println("Error can't get repositories")
-		fmt.Println(err)
-		return
-	}
-
-	counts := 0
-	now := time.Now()
-
-	for _, repo := range repos {
-		repoName := *repo.Name
-
-		repositoryCommits, _, err := client.Repositories.ListCommits(ctx, userName, repoName, &github.CommitsListOptions{})
-		if err != nil {
-			fmt.Println("Error can't get commits")
-			fmt.Println(err)
-			continue
-		}
-
-		for _, repositoryCommit := range repositoryCommits {
-			date := repositoryCommit.Commit.Author.Date
-			if date.Format("2006-01-02") == now.Format("2006-01-02") {
-				counts += 1
-			} else {
-				break
-			}
-		}
-	}
-
-	var message string
-
-	if counts == 0 {
-		message = "<!channel> 今日はまだコミットしていません！"
-	} else {
-		message = "今日のコミット数は" + fmt.Sprint(counts)
-	}
-
 	src := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: os.Args[4]},
 	)
@@ -88,6 +44,7 @@ func main() {
 
 	graphqlClient := graphql.NewClient("https://api.github.com/graphql", httpClient)
 
+	userName := os.Args[1]
 	variables := map[string]interface{}{
 		"name": graphql.String(userName),
 	}
@@ -98,6 +55,7 @@ func main() {
 	weeksLen := len(query.User.ContributionsCollection.ContributionCalendar.Weeks)
 	var countDays = 0
 	var countCommitsToday int
+	now := time.Now()
 out:
 	for i := weeksLen - 1; i >= 0; i-- {
 		daysLen := len(query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays)
@@ -115,13 +73,15 @@ out:
 		}
 	}
 
-	if countCommitsToday != 0 {
+	var message string
+	if countCommitsToday == 0 {
+		message = "<!channel> 今日はまだコミットしていません！"
+	} else {
+		message = "\n今日のコミット数は" + fmt.Sprint(countCommitsToday)
 		countDays++
 	}
 
-	message += "\n---" + "\n連続コミット日数は" + fmt.Sprint(countDays) + "\n今日のコミット数は" + fmt.Sprint(countCommitsToday) + "\n---"
-
-	message += "\nhttps://github.com/" + userName
+	message += "\n---" + "\n連続コミット日数は" + fmt.Sprint(countDays) + "\nhttps://github.com/" + userName
 
 	postSlack(message)
 }
