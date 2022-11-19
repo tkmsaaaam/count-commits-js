@@ -81,7 +81,7 @@ out:
 		countDays++
 	}
 
-	message += "\n---" + "\n連続コミット日数は" + fmt.Sprint(countDays) + "\nhttps://github.com/" + userName
+	message += "\n連続コミット日数は" + fmt.Sprint(countDays) + "\nhttps://github.com/" + userName
 
 	postSlack(message)
 }
