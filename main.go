@@ -10,11 +10,21 @@ import (
 	"time"
 )
 
+func createMessage(countCommitsToday int, countDays int, userName string) string {
+	var message string
+	if countCommitsToday == 0 {
+		message = "<!channel> 今日はまだコミットしていません！"
+	} else {
+		message = "\n今日のコミット数は" + fmt.Sprint(countCommitsToday)
+	}
+	message += "\n連続コミット日数は" + fmt.Sprint(countDays) + "\nhttps://github.com/" + userName
+	return message
+}
+
 func postSlack(message string) {
 	_, _, err := slack.New(os.Args[2]).PostMessage(os.Args[3], slack.MsgOptionText(message, false))
 	if err != nil {
 		fmt.Println(err)
-		return
 	}
 }
 
@@ -73,13 +83,6 @@ out:
 		}
 	}
 
-	var message string
-	if countCommitsToday == 0 {
-		message = "<!channel> 今日はまだコミットしていません！"
-	} else {
-		message = "\n今日のコミット数は" + fmt.Sprint(countCommitsToday)
-	}
-	message += "\n連続コミット日数は" + fmt.Sprint(countDays) + "\nhttps://github.com/" + userName
-
+	message := createMessage(countCommitsToday, countDays, userName)
 	postSlack(message)
 }
