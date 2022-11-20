@@ -11,9 +11,7 @@ import (
 )
 
 func postSlack(message string) {
-	c := slack.New(os.Args[2])
-
-	_, _, err := c.PostMessage(os.Args[3], slack.MsgOptionText(message, false))
+	_, _, err := slack.New(os.Args[2]).PostMessage(os.Args[3], slack.MsgOptionText(message, false))
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -41,9 +39,7 @@ func main() {
 		&oauth2.Token{AccessToken: os.Args[4]},
 	)
 	httpClient := oauth2.NewClient(context.Background(), src)
-
 	graphqlClient := graphql.NewClient("https://api.github.com/graphql", httpClient)
-
 	userName := os.Args[1]
 	variables := map[string]interface{}{
 		"name": graphql.String(userName),
@@ -52,17 +48,21 @@ func main() {
 	if graphqlErr != nil {
 		fmt.Println(graphqlErr)
 	}
-	weeksLen := len(query.User.ContributionsCollection.ContributionCalendar.Weeks)
-	var countDays = 0
+
+	weeksLength := len(query.User.ContributionsCollection.ContributionCalendar.Weeks)
 	var countCommitsToday int
 	now := time.Now()
+	var countDays int
 out:
-	for i := weeksLen - 1; i >= 0; i-- {
-		daysLen := len(query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays)
-		for j := daysLen - 1; j >= 0; j-- {
+	for i := weeksLength - 1; i >= 0; i-- {
+		daysLength := len(query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays)
+		for j := daysLength - 1; j >= 0; j-- {
 			day := query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays[j]
 			if now.Format("2006-01-02") == day.Date {
 				countCommitsToday = day.ContributionCount
+				if countCommitsToday != 0 {
+					countDays++
+				}
 				continue
 			}
 			if day.ContributionCount == 0 {
@@ -78,9 +78,7 @@ out:
 		message = "<!channel> 今日はまだコミットしていません！"
 	} else {
 		message = "\n今日のコミット数は" + fmt.Sprint(countCommitsToday)
-		countDays++
 	}
-
 	message += "\n連続コミット日数は" + fmt.Sprint(countDays) + "\nhttps://github.com/" + userName
 
 	postSlack(message)
