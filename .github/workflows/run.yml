@@ -11,7 +11,7 @@ jobs:
       - name: Restore Cache
         uses: actions/cache/restore@v3
         with:
-          path: ~/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/${{ github.event.repository.name }}
+          path: ${{ github.workspace }}/${{ github.event.repository.name }}
           key: ${{ runner.os }}-go-${{ github.sha }}
       - name: Execute
-        run: ~/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/${{ github.event.repository.name }} ${{ secrets.USER_NAME }} ${{ secrets.TOKEN_FOR_BOT }} ${{ secrets.CHANNEL_ID }} ${{ secrets.GITHUB_TOKEN }}
+        run: ${{ github.workspace }}/${{ github.event.repository.name }} ${{ secrets.USER_NAME }} ${{ secrets.TOKEN_FOR_BOT }} ${{ secrets.CHANNEL_ID }} ${{ secrets.GITHUB_TOKEN }}
