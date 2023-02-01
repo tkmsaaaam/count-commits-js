@@ -14,4 +14,9 @@ jobs:
           path: ${{ github.workspace }}/${{ github.event.repository.name }}
           key: ${{ runner.os }}-go-${{ github.sha }}
       - name: Execute
-        run: ${{ github.workspace }}/${{ github.event.repository.name }} ${{ secrets.USER_NAME }} ${{ secrets.TOKEN_FOR_BOT }} ${{ secrets.CHANNEL_ID }} ${{ secrets.GITHUB_TOKEN }}
+        run: ${{ github.workspace }}/${{ github.event.repository.name }}
+        env:
+          USER_NAME: ${{ secrets.USER_NAME }}
+          TOKEN_FOR_BOT: ${{ secrets.TOKEN_FOR_BOT }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

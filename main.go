@@ -22,7 +22,7 @@ func createMessage(countCommitsToday int, countDays int, userName string) string
 }
 
 func postSlack(message string) {
-	_, _, err := slack.New(os.Args[2]).PostMessage(os.Args[3], slack.MsgOptionText(message, false))
+	_, _, err := slack.New(os.Getenv("TOKEN_FOR_BOT")).PostMessage(os.Getenv("CHANNEL_ID"), slack.MsgOptionText(message, false))
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -46,11 +46,11 @@ var query struct {
 
 func main() {
 	src := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: os.Args[4]},
+		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
 	)
 	httpClient := oauth2.NewClient(context.Background(), src)
 	graphqlClient := graphql.NewClient("https://api.github.com/graphql", httpClient)
-	userName := os.Args[1]
+	userName := os.Getenv("USER_NAME")
 	variables := map[string]interface{}{
 		"name": graphql.String(userName),
 	}
