@@ -15,8 +15,8 @@ jobs:
         uses: actions/cache/restore@v3
         with:
           path: ${{ github.workspace }}/${{ github.event.repository.name }}
-          key: ${{ runner.os }}-go-
-          restore-keys: ${{ runner.os }}-go-
+          key: ${{ runner.os }}-go-main-
+          restore-keys: ${{ runner.os }}-go-main-
       - name: Execute
         run: ${{ github.workspace }}/${{ github.event.repository.name }}
         env:
