@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Check Cache Hit
         id: cache-hit
-        uses: actions/cache@v3
+        uses: actions/cache/restore@v3
         with:
           path: ${{ github.workspace }}/${{ github.event.repository.name }}
           key: ${{ runner.os }}-go-main-${{ hashFiles('**/go.sum', 'main.go') }}
