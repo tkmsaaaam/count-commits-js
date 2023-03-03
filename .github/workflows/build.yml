@@ -4,7 +4,8 @@ on:
   push:
     branches:
       - main
-permissions: {}
+permissions:
+  actions: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,7 +26,7 @@ jobs:
       - name: Remove old cache
         if: steps.cache-hit.outputs.cache-hit != 'true'
         env:
-          CACHENAME: ${{ runner.os }}-go-${{ hashFiles('**/go.sum', 'main.go') }}
+          CACHENAME: ${{ runner.os }}-go-main-
         run: |
           gh actions-cache list -R $GITHUB_REPOSITORY \
           | xargs -I@ echo @ \
