@@ -1,11 +1,9 @@
 name: build
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - '!.gitignore'
+  workflow_run:
+    workflows: [test]
+    types: [completed]
 permissions:
   actions: write
 jobs:
