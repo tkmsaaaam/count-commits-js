@@ -54,20 +54,30 @@ func postSlack(message string) {
 	}
 }
 
+type ContributionDay struct {
+	ContributionCount int
+	Date              string
+}
+
+type Week struct {
+	ContributionDays []ContributionDay
+}
+
+type ContributionCalendar struct {
+	TotalContributions graphql.Int
+	Weeks              []Week
+}
+
+type ContributionsCollection struct {
+	ContributionCalendar ContributionCalendar
+}
+
+type User struct {
+	ContributionsCollection ContributionsCollection
+}
+
 type Query struct {
-	User struct {
-		ContributionsCollection struct {
-			ContributionCalendar struct {
-				TotalContributions graphql.Int
-				Weeks              []struct {
-					ContributionDays []struct {
-						ContributionCount int
-						Date              string
-					}
-				}
-			}
-		}
-	} `graphql:"user(login: $name)"`
+	User User `graphql:"user(login: $name)"`
 }
 
 func main() {
