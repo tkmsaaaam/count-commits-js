@@ -31,8 +31,8 @@ func TestCreateMessage(t *testing.T) {
 		},
 		{
 			name: "commited",
-			args: args{countCommitsToday: 1, countDays: 2, userName: "octocat"},
-			want: "\n今日のコミット数は1\n連続コミット日数は2\nhttps://github.com/octocat",
+			args: args{countCommitsToday: 1, countDays: 1, userName: "octocat"},
+			want: "\n今日のコミット数は1\n連続コミット日数は1\nhttps://github.com/octocat",
 		},
 	}
 	for _, tt := range tests {
