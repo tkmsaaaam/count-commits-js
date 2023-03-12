@@ -10,50 +10,6 @@ import (
 	"time"
 )
 
-func countCommits(query Query) (int, int) {
-	weeksLength := len(query.User.ContributionsCollection.ContributionCalendar.Weeks)
-	var countCommitsToday int
-	now := time.Now()
-	var countDays int
-	for i := weeksLength - 1; i >= 0; i-- {
-		daysLength := len(query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays)
-		for j := daysLength - 1; j >= 0; j-- {
-			day := query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays[j]
-			if now.Format("2006-01-02") == day.Date {
-				countCommitsToday = day.ContributionCount
-				if countCommitsToday != 0 {
-					countDays++
-				}
-				continue
-			}
-			if day.ContributionCount == 0 {
-				return countCommitsToday, countDays
-			} else {
-				countDays++
-			}
-		}
-	}
-	return countCommitsToday, countDays
-}
-
-func createMessage(countCommitsToday int, countDays int, userName string) string {
-	var message string
-	if countCommitsToday == 0 {
-		message = "<!channel> 今日はまだコミットしていません！"
-	} else {
-		message = "\n今日のコミット数は" + fmt.Sprint(countCommitsToday)
-	}
-	message += "\n連続コミット日数は" + fmt.Sprint(countDays) + "\nhttps://github.com/" + userName
-	return message
-}
-
-func postSlack(message string) {
-	_, _, err := slack.New(os.Getenv("TOKEN_FOR_BOT")).PostMessage(os.Getenv("CHANNEL_ID"), slack.MsgOptionText(message, false))
-	if err != nil {
-		fmt.Println(err)
-	}
-}
-
 type ContributionDay struct {
 	ContributionCount int
 	Date              string
@@ -100,4 +56,48 @@ func main() {
 
 	message := createMessage(countCommitsToday, countDays, userName)
 	postSlack(message)
+}
+
+func countCommits(query Query) (int, int) {
+	weeksLength := len(query.User.ContributionsCollection.ContributionCalendar.Weeks)
+	var countCommitsToday int
+	now := time.Now()
+	var countDays int
+	for i := weeksLength - 1; i >= 0; i-- {
+		daysLength := len(query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays)
+		for j := daysLength - 1; j >= 0; j-- {
+			day := query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays[j]
+			if now.Format("2006-01-02") == day.Date {
+				countCommitsToday = day.ContributionCount
+				if countCommitsToday != 0 {
+					countDays++
+				}
+				continue
+			}
+			if day.ContributionCount == 0 {
+				return countCommitsToday, countDays
+			} else {
+				countDays++
+			}
+		}
+	}
+	return countCommitsToday, countDays
+}
+
+func createMessage(countCommitsToday int, countDays int, userName string) string {
+	var message string
+	if countCommitsToday == 0 {
+		message = "<!channel> 今日はまだコミットしていません！"
+	} else {
+		message = "\n今日のコミット数は" + fmt.Sprint(countCommitsToday)
+	}
+	message += "\n連続コミット日数は" + fmt.Sprint(countDays) + "\nhttps://github.com/" + userName
+	return message
+}
+
+func postSlack(message string) {
+	_, _, err := slack.New(os.Getenv("TOKEN_FOR_BOT")).PostMessage(os.Getenv("CHANNEL_ID"), slack.MsgOptionText(message, false))
+	if err != nil {
+		fmt.Println(err)
+	}
 }
