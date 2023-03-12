@@ -15,7 +15,6 @@ func countCommits(query Query) (int, int) {
 	var countCommitsToday int
 	now := time.Now()
 	var countDays int
-out:
 	for i := weeksLength - 1; i >= 0; i-- {
 		daysLength := len(query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays)
 		for j := daysLength - 1; j >= 0; j-- {
@@ -28,7 +27,7 @@ out:
 				continue
 			}
 			if day.ContributionCount == 0 {
-				break out
+				return countCommitsToday, countDays
 			} else {
 				countDays++
 			}
