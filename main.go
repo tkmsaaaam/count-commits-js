@@ -36,6 +36,19 @@ type Query struct {
 	User User `graphql:"user(login: $name)"`
 }
 
+type Client struct {
+	*graphql.Client
+}
+
+func (client Client) execQuery(ctx context.Context, variables map[string]interface{}) Query {
+	var query Query
+	graphqlErr := client.Query(ctx, &query, variables)
+	if graphqlErr != nil {
+		fmt.Println(graphqlErr)
+	}
+	return query
+}
+
 func main() {
 	src := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
@@ -46,12 +59,7 @@ func main() {
 	variables := map[string]interface{}{
 		"name": graphql.String(userName),
 	}
-	var query Query
-	graphqlErr := graphqlClient.Query(context.Background(), &query, variables)
-	if graphqlErr != nil {
-		fmt.Println(graphqlErr)
-	}
-
+	query := Client{graphqlClient}.execQuery(context.Background(), variables)
 	countCommitsToday, countDays := countCommits(query)
 
 	message := createMessage(countCommitsToday, countDays, userName)
