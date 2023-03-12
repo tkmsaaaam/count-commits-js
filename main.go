@@ -10,6 +10,33 @@ import (
 	"time"
 )
 
+func countCommits(query Query) (int, int) {
+	weeksLength := len(query.User.ContributionsCollection.ContributionCalendar.Weeks)
+	var countCommitsToday int
+	now := time.Now()
+	var countDays int
+out:
+	for i := weeksLength - 1; i >= 0; i-- {
+		daysLength := len(query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays)
+		for j := daysLength - 1; j >= 0; j-- {
+			day := query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays[j]
+			if now.Format("2006-01-02") == day.Date {
+				countCommitsToday = day.ContributionCount
+				if countCommitsToday != 0 {
+					countDays++
+				}
+				continue
+			}
+			if day.ContributionCount == 0 {
+				break out
+			} else {
+				countDays++
+			}
+		}
+	}
+	return countCommitsToday, countDays
+}
+
 func createMessage(countCommitsToday int, countDays int, userName string) string {
 	var message string
 	if countCommitsToday == 0 {
@@ -28,7 +55,7 @@ func postSlack(message string) {
 	}
 }
 
-var query struct {
+type Query struct {
 	User struct {
 		ContributionsCollection struct {
 			ContributionCalendar struct {
@@ -54,34 +81,13 @@ func main() {
 	variables := map[string]interface{}{
 		"name": graphql.String(userName),
 	}
+	var query Query
 	graphqlErr := graphqlClient.Query(context.Background(), &query, variables)
 	if graphqlErr != nil {
 		fmt.Println(graphqlErr)
 	}
 
-	weeksLength := len(query.User.ContributionsCollection.ContributionCalendar.Weeks)
-	var countCommitsToday int
-	now := time.Now()
-	var countDays int
-out:
-	for i := weeksLength - 1; i >= 0; i-- {
-		daysLength := len(query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays)
-		for j := daysLength - 1; j >= 0; j-- {
-			day := query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays[j]
-			if now.Format("2006-01-02") == day.Date {
-				countCommitsToday = day.ContributionCount
-				if countCommitsToday != 0 {
-					countDays++
-				}
-				continue
-			}
-			if day.ContributionCount == 0 {
-				break out
-			} else {
-				countDays++
-			}
-		}
-	}
+	countCommitsToday, countDays := countCommits(query)
 
 	message := createMessage(countCommitsToday, countDays, userName)
 	postSlack(message)
