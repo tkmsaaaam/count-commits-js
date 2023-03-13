@@ -1,9 +1,41 @@
 package main
 
 import (
+	"context"
+	"net/http"
 	"testing"
 	"time"
+
+	"github.com/shurcooL/graphql"
 )
+
+func TestExecQuery(t *testing.T) {
+	type args struct {
+		ctx       context.Context
+		variables map[string]interface{}
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want Query
+	}{
+		{
+			name: "urlNil",
+			args: args{ctx: context.Background(), variables: map[string]interface{}{"name": graphql.String("octocat")}},
+			want: Query{},
+		},
+	}
+	client := graphql.NewClient("", http.DefaultClient)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Client{client}.execQuery(tt.args.ctx, tt.args.variables)
+			if got.User.ContributionsCollection.ContributionCalendar.TotalContributions != tt.want.User.ContributionsCollection.ContributionCalendar.TotalContributions {
+				t.Errorf("add() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
 func TestCountCommits(t *testing.T) {
 	type args struct {
