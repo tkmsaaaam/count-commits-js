@@ -96,6 +96,12 @@ func TestCountCommits(t *testing.T) {
 			wantCountCommitsToday: 1,
 			wantCountDays:         2,
 		},
+		{
+			name:                  "noStreak",
+			args:                  args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 2, Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: time.Now().AddDate(0, 0, -2).Format("2006-01-02")}, {ContributionCount: 0, Date: time.Now().AddDate(0, 0, -1).Format("2006-01-02")}, {ContributionCount: 1, Date: time.Now().Format("2006-01-02")}}}}}}}}},
+			wantCountCommitsToday: 1,
+			wantCountDays:         1,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
