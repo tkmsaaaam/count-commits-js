@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -22,11 +23,14 @@ func TestExecQuery(t *testing.T) {
 	}{
 		{
 			name: "urlNil",
-			args: args{ctx: context.Background(), variables: map[string]interface{}{}},
-			want: Query{},
+			args: args{ctx: context.Background(), variables: map[string]interface{}{"name": graphql.String("octocat")}},
+			want: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 0}}}},
 		},
 	}
-	client := graphql.NewClient("", http.DefaultClient)
+	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 0}}}}}")
+	})
+	client := graphql.NewClient("/graphql", http.DefaultClient)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := Client{client}.execQuery(tt.args.ctx, tt.args.variables)
