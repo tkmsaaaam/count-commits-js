@@ -22,7 +22,7 @@ func TestExecQuery(t *testing.T) {
 	}{
 		{
 			name: "urlNil",
-			args: args{ctx: context.Background(), variables: map[string]interface{}{"name": graphql.String("octocat")}},
+			args: args{ctx: context.Background(), variables: map[string]interface{}{}},
 			want: Query{},
 		},
 	}
