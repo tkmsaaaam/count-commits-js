@@ -17,21 +17,23 @@ func TestExecQuery(t *testing.T) {
 	}
 
 	tests := []struct {
-		name string
-		args args
-		want Query
+		name     string
+		args     args
+		queryStr string
+		want     Query
 	}{
 		{
-			name: "urlNil",
-			args: args{ctx: context.Background(), variables: map[string]interface{}{"name": graphql.String("octocat")}},
-			want: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 0}}}},
+			name:     "urlNil",
+			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": graphql.String("octocat")}},
+			queryStr: "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 0}}}}}",
+			want:     Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 0}}}},
 		},
 	}
-	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
-		io.WriteString(w, "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 0}}}}}")
-	})
 	client := graphql.NewClient("/graphql", http.DefaultClient)
 	for _, tt := range tests {
+		http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
+			io.WriteString(w, tt.queryStr)
+		})
 		t.Run(tt.name, func(t *testing.T) {
 			got := Client{client}.execQuery(tt.args.ctx, tt.args.variables)
 			if got.User.ContributionsCollection.ContributionCalendar.TotalContributions != tt.want.User.ContributionsCollection.ContributionCalendar.TotalContributions {
