@@ -23,7 +23,7 @@ func TestExecQuery(t *testing.T) {
 		want     Query
 	}{
 		{
-			name:     "urlNil",
+			name:     "totalContributionsIsZero",
 			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": graphql.String("octocat")}},
 			queryStr: "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 0}}}}}",
 			want:     Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 0}}}},
