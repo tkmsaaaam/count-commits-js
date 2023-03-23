@@ -23,15 +23,22 @@ func TestExecQuery(t *testing.T) {
 		want     Query
 	}{
 		{
+			name:     "queryIsNil",
+			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": graphql.String("octocat")}},
+			queryStr: "{\"data\": {}}",
+			want:     Query{},
+		},
+		{
 			name:     "totalContributionsIsZero",
 			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": graphql.String("octocat")}},
 			queryStr: "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 0}}}}}",
 			want:     Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 0}}}},
 		},
 	}
-	client := graphql.NewClient("/graphql", http.DefaultClient)
 	for _, tt := range tests {
-		http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
+		client := graphql.NewClient("/graphql", http.DefaultClient)
+		mux := http.NewServeMux()
+		mux.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
 			io.WriteString(w, tt.queryStr)
 		})
 		t.Run(tt.name, func(t *testing.T) {
