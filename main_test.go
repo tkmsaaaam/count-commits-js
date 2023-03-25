@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -36,8 +37,8 @@ func TestExecQuery(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		client := graphql.NewClient("/graphql", http.DefaultClient)
 		mux := http.NewServeMux()
+		client := graphql.NewClient("/graphql", &http.Client{Transport: localRoundTripper{handler: mux}})
 		mux.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
 			io.WriteString(w, tt.queryStr)
 		})
@@ -48,6 +49,16 @@ func TestExecQuery(t *testing.T) {
 			}
 		})
 	}
+}
+
+type localRoundTripper struct {
+	handler http.Handler
+}
+
+func (localRoundTripper localRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	ressponseRecorder := httptest.NewRecorder()
+	localRoundTripper.handler.ServeHTTP(ressponseRecorder, req)
+	return ressponseRecorder.Result(), nil
 }
 
 func TestCountCommits(t *testing.T) {
