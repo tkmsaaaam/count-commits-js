@@ -12,9 +12,4 @@ permissions:
   actions: write
 jobs:
   script:
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout self repo
-        uses: actions/checkout@v3
-      - name: Re-enable actions
-        uses: tkmsaaaam/manage-slack/blob/main/.github/workflows/manage_action.yml@main
+    uses: tkmsaaaam/manage-slack/blob/main/.github/workflows/manage_action.yml@main
