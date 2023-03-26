@@ -12,4 +12,4 @@ permissions:
   actions: write
 jobs:
   script:
-    uses: tkmsaaaam/manage-slack/blob/main/.github/workflows/manage_action.yml@main
+    uses: tkmsaaaam/manage-slack/.github/workflows/manage_action.yml@main
