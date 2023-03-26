@@ -6,21 +6,12 @@ on:
   workflow_run:
     workflows: [build]
     types: [completed]
+env:
+  USER_NAME: ${{ secrets.USER_NAME }}
+  TOKEN_FOR_BOT: ${{ secrets.TOKEN_FOR_BOT }}
+  CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 permissions: {}
 jobs:
   script:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Restore Cache
-        uses: actions/cache/restore@v3
-        with:
-          path: ${{ github.workspace }}/${{ github.event.repository.name }}
-          key: ${{ runner.os }}-go-main-
-          restore-keys: ${{ runner.os }}-go-main-
-      - name: Execute
-        run: ${{ github.workspace }}/${{ github.event.repository.name }}
-        env:
-          USER_NAME: ${{ secrets.USER_NAME }}
-          TOKEN_FOR_BOT: ${{ secrets.TOKEN_FOR_BOT }}
-          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    uses: ./.github/workflows/reusing.yml
