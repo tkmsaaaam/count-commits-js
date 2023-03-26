@@ -1,4 +1,4 @@
-name: Reusing
+name: Reusing Execute
 on:
   workflow_call:
 permissions: {}

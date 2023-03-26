@@ -14,4 +14,4 @@ env:
 permissions: {}
 jobs:
   script:
-    uses: ./.github/workflows/reusing.yml
+    uses: ./.github/workflows/reusing_execute.yml
