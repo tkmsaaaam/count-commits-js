@@ -3,14 +3,17 @@ on:
   schedule:
     - cron: '12 12 1 * *'
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/manage_actions.yml"
 permissions:
   actions: write
 jobs:
   script:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout self repo
-        uses: actions/checkout@v3
       - name: Re-enable actions
         run: |
           gh workflow list --repo $GITHUB_REPOSITORY | xargs -I@ echo @ | awk '{print $1}' | xargs -I% gh workflow disable % --repo $GITHUB_REPOSITORY
