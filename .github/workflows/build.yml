@@ -11,3 +11,5 @@ env:
 jobs:
   build:
     uses: ./.github/workflows/reusing_build.yml
+    secrets:
+      FILE_NAME: main
