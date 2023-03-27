@@ -1,6 +1,17 @@
 name: Reusing Execute
 on:
   workflow_call:
+    secrets:
+      CITY_ID:
+        required: false
+      GH_TOKEN:
+        required: false
+      GH_USER_NAME:
+        required: false
+      SLACK_BOT_TOKEN:
+        required: true
+      SLACK_CHANNEL_ID:
+        required: true
 permissions: {}
 jobs:
   execute:
@@ -14,3 +25,9 @@ jobs:
           restore-keys: ${{ runner.os }}-go-main-
       - name: Execute
         run: ${{ github.workspace }}/${{ github.event.repository.name }}
+        env:
+          CITY_ID: ${{ secrets.CITY_ID }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_USER_NAME: ${{ secrets.GH_USER_NAME }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}

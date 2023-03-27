@@ -42,11 +42,11 @@ type Client struct {
 
 func main() {
 	src := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
+		&oauth2.Token{AccessToken: os.Getenv("GH_TOKEN")},
 	)
 	httpClient := oauth2.NewClient(context.Background(), src)
 	graphqlClient := graphql.NewClient("https://api.github.com/graphql", httpClient)
-	userName := os.Getenv("USER_NAME")
+	userName := os.Getenv("GH_USER_NAME")
 	variables := map[string]interface{}{
 		"name": graphql.String(userName),
 	}
@@ -104,7 +104,7 @@ func createMessage(countCommitsToday int, countDays int, userName string) string
 }
 
 func postSlack(message string) {
-	_, _, err := slack.New(os.Getenv("TOKEN_FOR_BOT")).PostMessage(os.Getenv("CHANNEL_ID"), slack.MsgOptionText(message, false))
+	_, _, err := slack.New(os.Getenv("SLACK_BOT_TOKEN")).PostMessage(os.Getenv("SLACK_CHANNEL_ID"), slack.MsgOptionText(message, false))
 	if err != nil {
 		fmt.Println(err)
 	}

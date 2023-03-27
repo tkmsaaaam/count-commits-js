@@ -6,12 +6,12 @@ on:
   workflow_run:
     workflows: [build]
     types: [completed]
-env:
-  USER_NAME: ${{ secrets.USER_NAME }}
-  TOKEN_FOR_BOT: ${{ secrets.TOKEN_FOR_BOT }}
-  CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 permissions: {}
 jobs:
   script:
     uses: ./.github/workflows/reusing_execute.yml
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_USER_NAME: ${{ secrets.GH_USER_NAME }}
+      SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
