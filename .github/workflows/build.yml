@@ -10,6 +10,6 @@ env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 jobs:
   build:
-    uses: ./.github/workflows/reusing_build.yml
+    uses: tkmsaaaam/manage-slack/.github/workflows/reusing_build.yml@main
     secrets:
       FILE_NAME: main
