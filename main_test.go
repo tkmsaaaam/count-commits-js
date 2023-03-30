@@ -45,7 +45,7 @@ func TestExecQuery(t *testing.T) {
 	for _, tt := range tests {
 		mux := http.NewServeMux()
 		client := graphql.NewClient("/graphql", &http.Client{Transport: localRoundTripper{handler: mux}})
-		mux.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
+		mux.HandleFunc("/graphql", func(w http.ResponseWriter, _ *http.Request) {
 			io.WriteString(w, tt.queryStr)
 		})
 		t.Run(tt.name, func(t *testing.T) {
