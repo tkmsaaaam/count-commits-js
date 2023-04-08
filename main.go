@@ -29,7 +29,7 @@ type ContributionsCollection struct {
 }
 
 type User struct {
-	ContributionsCollection ContributionsCollection
+	ContributionsCollection ContributionsCollection `graphql:"contributionsCollection(from: $from to: $to)"`
 }
 
 type Query struct {
@@ -40,19 +40,44 @@ type Client struct {
 	*githubv4.Client
 }
 
+type DateTime struct {
+	time.Time
+}
+
 func main() {
 	src := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: os.Getenv("GH_TOKEN")},
 	)
 	httpClient := oauth2.NewClient(context.Background(), src)
 	graphqlClient := githubv4.NewClient(httpClient)
-	userName := os.Getenv("GH_USER_NAME")
-	variables := map[string]interface{}{
-		"name": githubv4.String(userName),
-	}
-	query := Client{graphqlClient}.execQuery(context.Background(), variables)
-	countCommitsToday, countDays := countCommits(query)
 
+	countOverAYear(graphqlClient)
+}
+
+func countOverAYear(graphqlClient *githubv4.Client) {
+	var countDays int
+	var countCommitsToday int
+	var streak = 365
+	userName := os.Getenv("GH_USER_NAME")
+	for i := 0; i < 10; i++ {
+		if streak < 365 {
+			break
+		}
+		from := DateTime{time.Now().AddDate(-(i + 1), 0, 1)}
+		to := DateTime{time.Now().AddDate(-i, 0, 0)}
+		variables := map[string]interface{}{
+			"name": githubv4.String(userName),
+			"from": githubv4.DateTime(from),
+			"to":   githubv4.DateTime(to),
+		}
+		query := Client{graphqlClient}.execQuery(context.Background(), variables)
+		today, count := countCommits(query)
+		if countCommitsToday == 0 {
+			countCommitsToday = today
+		}
+		streak = count
+		countDays += streak
+	}
 	message := createMessage(countCommitsToday, countDays, userName)
 	postSlack(message)
 }
