@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/shurcooL/graphql"
+	"github.com/shurcooL/githubv4"
 	"github.com/slack-go/slack"
 	"golang.org/x/oauth2"
 	"os"
@@ -20,7 +20,7 @@ type Week struct {
 }
 
 type ContributionCalendar struct {
-	TotalContributions graphql.Int
+	TotalContributions githubv4.Int
 	Weeks              []Week
 }
 
@@ -37,7 +37,7 @@ type Query struct {
 }
 
 type Client struct {
-	*graphql.Client
+	*githubv4.Client
 }
 
 func main() {
@@ -45,10 +45,10 @@ func main() {
 		&oauth2.Token{AccessToken: os.Getenv("GH_TOKEN")},
 	)
 	httpClient := oauth2.NewClient(context.Background(), src)
-	graphqlClient := graphql.NewClient("https://api.github.com/graphql", httpClient)
+	graphqlClient := githubv4.NewClient(httpClient)
 	userName := os.Getenv("GH_USER_NAME")
 	variables := map[string]interface{}{
-		"name": graphql.String(userName),
+		"name": githubv4.String(userName),
 	}
 	query := Client{graphqlClient}.execQuery(context.Background(), variables)
 	countCommitsToday, countDays := countCommits(query)

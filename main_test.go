@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/shurcooL/graphql"
+	"github.com/shurcooL/githubv4"
 )
 
 func TestExecQuery(t *testing.T) {
@@ -25,26 +25,26 @@ func TestExecQuery(t *testing.T) {
 	}{
 		{
 			name:     "queryIsNil",
-			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": graphql.String("octocat")}},
+			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": githubv4.String("octocat")}},
 			queryStr: "{\"data\": {}}",
 			want:     Query{},
 		},
 		{
 			name:     "totalContributionsIsZero",
-			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": graphql.String("octocat")}},
+			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": githubv4.String("octocat")}},
 			queryStr: "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 0}}}}}",
 			want:     Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 0}}}},
 		},
 		{
 			name:     "totalContributionsIsOne",
-			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": graphql.String("octocat")}},
+			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": githubv4.String("octocat")}},
 			queryStr: "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 1, \"weeks\": [{\"contributionDays\": [{\"date\": \"2023-01-01T00:00:00.000+00:00\", \"contributionCount\": 1}]}]}}}}}",
 			want:     Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 1, Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: "2023-01-01T00:00:00.000+00:00"}}}}}}}},
 		},
 	}
 	for _, tt := range tests {
 		mux := http.NewServeMux()
-		client := graphql.NewClient("/graphql", &http.Client{Transport: localRoundTripper{handler: mux}})
+		client := githubv4.NewClient(&http.Client{Transport: localRoundTripper{handler: mux}})
 		mux.HandleFunc("/graphql", func(w http.ResponseWriter, _ *http.Request) {
 			io.WriteString(w, tt.queryStr)
 		})
