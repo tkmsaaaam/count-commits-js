@@ -73,86 +73,71 @@ func TestCountCommits(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                  string
-		args                  args
-		wantCountCommitsToday int
-		wantCountDays         int
+		name string
+		args args
+		want int
 	}{
 		{
-			name:                  "queryIsNil",
-			args:                  args{query: Query{}},
-			wantCountCommitsToday: 0,
-			wantCountDays:         0,
+			name: "queryIsNil",
+			args: args{query: Query{}},
+			want: 0,
 		},
 		{
-			name:                  "weeksLengthIsZero",
-			args:                  args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 0, Weeks: []Week{}}}}}},
-			wantCountCommitsToday: 0,
-			wantCountDays:         0,
+			name: "weeksLengthIsZero",
+			args: args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 0, Weeks: []Week{}}}}}},
+			want: 0,
 		},
 		{
-			name:                  "commitsTodayIsZero",
-			args:                  args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 0, Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 0, Date: time.Now().Format("2006-01-02")}}}}}}}}},
-			wantCountCommitsToday: 0,
-			wantCountDays:         0,
+			name: "commitsTodayIsZero",
+			args: args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 0, Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 0, Date: time.Now().Format("2006-01-02")}}}}}}}}},
+			want: 0,
 		},
 		{
-			name:                  "countCommitsTodayIsOne",
-			args:                  args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 2, Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: time.Now().Format("2006-01-02")}}}}}}}}},
-			wantCountCommitsToday: 1,
-			wantCountDays:         1,
+			name: "countCommitsTodayIsOne",
+			args: args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 2, Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: time.Now().Format("2006-01-02")}}}}}}}}},
+			want: 1,
 		},
 		{
-			name:                  "countCommitsTodayIsTwo",
-			args:                  args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 2, Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 2, Date: time.Now().Format("2006-01-02")}}}}}}}}},
-			wantCountCommitsToday: 2,
-			wantCountDays:         1,
+			name: "countCommitsTodayIsTwo",
+			args: args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 2, Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 2, Date: time.Now().Format("2006-01-02")}}}}}}}}},
+			want: 1,
 		},
 		{
-			name:                  "countCommitsTodayIsZeroAndYesterdayIsOne",
-			args:                  args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 1, Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: time.Now().AddDate(0, 0, -1).Format("2006-01-02")}, {ContributionCount: 0, Date: time.Now().Format("2006-01-02")}}}}}}}}},
-			wantCountCommitsToday: 0,
-			wantCountDays:         1,
+			name: "countCommitsTodayIsZeroAndYesterdayIsOne",
+			args: args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 1, Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: time.Now().AddDate(0, 0, -1).Format("2006-01-02")}, {ContributionCount: 0, Date: time.Now().Format("2006-01-02")}}}}}}}}},
+			want: 1,
 		},
 		{
-			name:                  "countCommitsTodayIsZeroAndStreak",
-			args:                  args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 2, Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: time.Now().AddDate(0, 0, -2).Format("2006-01-02")}, {ContributionCount: 1, Date: time.Now().AddDate(0, 0, -1).Format("2006-01-02")}, {ContributionCount: 0, Date: time.Now().Format("2006-01-02")}}}}}}}}},
-			wantCountCommitsToday: 0,
-			wantCountDays:         2,
+			name: "countCommitsTodayIsZeroAndStreak",
+			args: args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 2, Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: time.Now().AddDate(0, 0, -2).Format("2006-01-02")}, {ContributionCount: 1, Date: time.Now().AddDate(0, 0, -1).Format("2006-01-02")}, {ContributionCount: 0, Date: time.Now().Format("2006-01-02")}}}}}}}}},
+			want: 2,
 		},
 		{
-			name:                  "countCommitsTodayIsOneAndStreak",
-			args:                  args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 3, Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: time.Now().AddDate(0, 0, -2).Format("2006-01-02")}, {ContributionCount: 1, Date: time.Now().AddDate(0, 0, -1).Format("2006-01-02")}, {ContributionCount: 1, Date: time.Now().Format("2006-01-02")}}}}}}}}},
-			wantCountCommitsToday: 1,
-			wantCountDays:         3,
+			name: "countCommitsTodayIsOneAndStreak",
+			args: args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 3, Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: time.Now().AddDate(0, 0, -2).Format("2006-01-02")}, {ContributionCount: 1, Date: time.Now().AddDate(0, 0, -1).Format("2006-01-02")}, {ContributionCount: 1, Date: time.Now().Format("2006-01-02")}}}}}}}}},
+			want: 3,
 		},
 		{
-			name:                  "countCommitsTodayIsOneAndYesterdayIsOne",
-			args:                  args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 1, Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: time.Now().AddDate(0, 0, -1).Format("2006-01-02")}, {ContributionCount: 1, Date: time.Now().Format("2006-01-02")}}}}}}}}},
-			wantCountCommitsToday: 1,
-			wantCountDays:         2,
+			name: "countCommitsTodayIsOneAndYesterdayIsOne",
+			args: args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 1, Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: time.Now().AddDate(0, 0, -1).Format("2006-01-02")}, {ContributionCount: 1, Date: time.Now().Format("2006-01-02")}}}}}}}}},
+			want: 2,
 		},
 		{
-			name:                  "countCommitsTodayIsOneAndYesterdayIsOneInLastWeek",
-			args:                  args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 1, Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: time.Now().AddDate(0, 0, -1).Format("2006-01-02")}}}, {ContributionDays: []ContributionDay{{ContributionCount: 1, Date: time.Now().Format("2006-01-02")}}}}}}}}},
-			wantCountCommitsToday: 1,
-			wantCountDays:         2,
+			name: "countCommitsTodayIsOneAndYesterdayIsOneInLastWeek",
+			args: args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 1, Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: time.Now().AddDate(0, 0, -1).Format("2006-01-02")}}}, {ContributionDays: []ContributionDay{{ContributionCount: 1, Date: time.Now().Format("2006-01-02")}}}}}}}}},
+			want: 2,
 		},
 		{
-			name:                  "noStreak",
-			args:                  args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 2, Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: time.Now().AddDate(0, 0, -2).Format("2006-01-02")}, {ContributionCount: 0, Date: time.Now().AddDate(0, 0, -1).Format("2006-01-02")}, {ContributionCount: 1, Date: time.Now().Format("2006-01-02")}}}}}}}}},
-			wantCountCommitsToday: 1,
-			wantCountDays:         1,
+			name: "noStreak",
+			args: args{query: Query{User{ContributionsCollection{ContributionCalendar{TotalContributions: 2, Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: time.Now().AddDate(0, 0, -2).Format("2006-01-02")}, {ContributionCount: 0, Date: time.Now().AddDate(0, 0, -1).Format("2006-01-02")}, {ContributionCount: 1, Date: time.Now().Format("2006-01-02")}}}}}}}}},
+			want: 1,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotCountCommtsToday, gotCountDays := countCommits(tt.args.query)
-			if gotCountCommtsToday != tt.wantCountCommitsToday {
-				t.Errorf("add() = %v, want %v", gotCountCommtsToday, tt.wantCountCommitsToday)
-			}
-			if gotCountDays != tt.wantCountDays {
-				t.Errorf("add() = %v, want %v", gotCountDays, tt.wantCountDays)
+			got := countCommits(tt.args.query)
+			if got != tt.want {
+				t.Errorf("add() = %v, want %v", got, tt.want)
 			}
 		})
 	}

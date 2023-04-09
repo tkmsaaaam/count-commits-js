@@ -56,13 +56,10 @@ func main() {
 
 func countOverAYear(graphqlClient *githubv4.Client) {
 	var countDays int
-	var countCommitsToday int
-	var streak = 365
+	var todayContributionCount int
+	var streak int
 	userName := os.Getenv("GH_USER_NAME")
-	for i := 0; i < 10; i++ {
-		if streak < 365 {
-			break
-		}
+	for i := 0; i == 0 || streak >= 364; i++ {
 		from := DateTime{time.Now().AddDate(-(i + 1), 0, 1)}
 		to := DateTime{time.Now().AddDate(-i, 0, 0)}
 		variables := map[string]interface{}{
@@ -71,41 +68,40 @@ func countOverAYear(graphqlClient *githubv4.Client) {
 			"to":   githubv4.DateTime(to),
 		}
 		query := Client{graphqlClient}.execQuery(context.Background(), variables)
-		today, count := countCommits(query)
-		if countCommitsToday == 0 {
-			countCommitsToday = today
+		if i == 0 {
+			w := len(query.User.ContributionsCollection.ContributionCalendar.Weeks) - 1
+			c := len(query.User.ContributionsCollection.ContributionCalendar.Weeks[w].ContributionDays) - 1
+			today := query.User.ContributionsCollection.ContributionCalendar.Weeks[w].ContributionDays[c]
+			if today.Date == time.Now().Format("2006-01-02") {
+				todayContributionCount = today.ContributionCount
+			}
 		}
+		count := countCommits(query)
 		streak = count
 		countDays += streak
 	}
-	message := createMessage(countCommitsToday, countDays, userName)
+	message := createMessage(todayContributionCount, countDays, userName)
 	postSlack(message)
 }
 
-func countCommits(query Query) (int, int) {
+func countCommits(query Query) int {
 	weeksLength := len(query.User.ContributionsCollection.ContributionCalendar.Weeks)
-	var countCommitsToday int
 	now := time.Now()
 	var countDays int
 	for i := weeksLength - 1; i >= 0; i-- {
 		daysLength := len(query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays)
 		for j := daysLength - 1; j >= 0; j-- {
 			day := query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays[j]
-			if now.Format("2006-01-02") == day.Date {
-				countCommitsToday = day.ContributionCount
-				if countCommitsToday != 0 {
-					countDays++
-				}
-				continue
-			}
 			if day.ContributionCount == 0 {
-				return countCommitsToday, countDays
+				if now.Format("2006-01-02") != day.Date {
+					return countDays
+				}
 			} else {
 				countDays++
 			}
 		}
 	}
-	return countCommitsToday, countDays
+	return countDays
 }
 
 func (client Client) execQuery(ctx context.Context, variables map[string]interface{}) Query {
@@ -117,12 +113,12 @@ func (client Client) execQuery(ctx context.Context, variables map[string]interfa
 	return query
 }
 
-func createMessage(countCommitsToday int, countDays int, userName string) string {
+func createMessage(todayContributionCount int, countDays int, userName string) string {
 	var message string
-	if countCommitsToday == 0 {
+	if todayContributionCount == 0 {
 		message = "<!channel> 今日はまだコミットしていません！"
 	} else {
-		message = "\n今日のコミット数は" + fmt.Sprint(countCommitsToday)
+		message = "\n今日のコミット数は" + fmt.Sprint(todayContributionCount)
 	}
 	message += "\n連続コミット日数は" + fmt.Sprint(countDays) + "\nhttps://github.com/" + userName
 	return message
