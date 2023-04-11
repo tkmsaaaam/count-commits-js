@@ -92,13 +92,10 @@ func countCommits(query Query) int {
 		daysLength := len(query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays)
 		for j := daysLength - 1; j >= 0; j-- {
 			day := query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays[j]
-			if day.ContributionCount == 0 {
-				if now.Format("2006-01-02") != day.Date {
-					return countDays
-				}
-			} else {
-				countDays++
+			if day.ContributionCount == 0 && now.Format("2006-01-02") != day.Date {
+				return countDays
 			}
+			countDays++
 		}
 	}
 	return countDays
