@@ -9,8 +9,11 @@ on:
 permissions: {}
 jobs:
   script:
-    uses: ./.github/workflows/reusing_execute.yml
+    uses: tkmsaaaam/manage-slack/.github/workflows/reusing_execute.yml@main
     secrets:
+      cacheName: main
+      fileName: main
+    with:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_USER_NAME: ${{ secrets.GH_USER_NAME }}
       SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
