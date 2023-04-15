@@ -135,7 +135,7 @@ func TestCountCommits(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := countCommits(tt.args.query)
+			got := countCommittedDays(tt.args.query)
 			if got != tt.want {
 				t.Errorf("add() = %v, want %v", got, tt.want)
 			}

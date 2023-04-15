@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/shurcooL/githubv4"
 	"github.com/slack-go/slack"
 	"golang.org/x/oauth2"
-	"os"
-	"time"
 )
 
 type ContributionDay struct {
@@ -76,7 +77,7 @@ func countOverAYear(graphqlClient *githubv4.Client) {
 				todayContributionCount = today.ContributionCount
 			}
 		}
-		count := countCommits(query)
+		count := countCommittedDays(query)
 		streak = count
 		countDays += streak
 	}
@@ -84,7 +85,7 @@ func countOverAYear(graphqlClient *githubv4.Client) {
 	postSlack(message)
 }
 
-func countCommits(query Query) int {
+func countCommittedDays(query Query) int {
 	weeksLength := len(query.User.ContributionsCollection.ContributionCalendar.Weeks)
 	now := time.Now()
 	var countDays int
@@ -92,8 +93,12 @@ func countCommits(query Query) int {
 		daysLength := len(query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays)
 		for j := daysLength - 1; j >= 0; j-- {
 			day := query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays[j]
-			if day.ContributionCount == 0 && now.Format("2006-01-02") != day.Date {
-				return countDays
+			if day.ContributionCount == 0 {
+				if now.Format("2006-01-02") == day.Date {
+					continue
+				} else {
+					return countDays
+				}
 			}
 			countDays++
 		}
