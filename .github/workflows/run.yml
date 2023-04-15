@@ -10,10 +10,10 @@ permissions: {}
 jobs:
   script:
     uses: tkmsaaaam/manage-slack/.github/workflows/reusing_execute.yml@main
-    secrets:
+    with:
       cacheName: main
       fileName: main
-    with:
+    secrets:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_USER_NAME: ${{ secrets.GH_USER_NAME }}
       SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
