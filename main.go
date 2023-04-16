@@ -46,20 +46,23 @@ type DateTime struct {
 }
 
 func main() {
+	userName := os.Getenv("GH_USER_NAME")
 	src := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: os.Getenv("GH_TOKEN")},
 	)
 	httpClient := oauth2.NewClient(context.Background(), src)
 	graphqlClient := githubv4.NewClient(httpClient)
 
-	countOverAYear(graphqlClient)
+	todayContributionCount, countDays := countOverAYear(userName, graphqlClient)
+
+	message := createMessage(todayContributionCount, countDays, userName)
+	postSlack(message)
 }
 
-func countOverAYear(graphqlClient *githubv4.Client) {
+func countOverAYear(userName string, graphqlClient *githubv4.Client) (int, int) {
 	var countDays int
 	var todayContributionCount int
 	var streak int
-	userName := os.Getenv("GH_USER_NAME")
 	for i := 0; i == 0 || streak >= 364; i++ {
 		from := DateTime{time.Now().AddDate(-(i + 1), 0, 1)}
 		to := DateTime{time.Now().AddDate(-i, 0, 0)}
@@ -81,8 +84,8 @@ func countOverAYear(graphqlClient *githubv4.Client) {
 		streak = count
 		countDays += streak
 	}
-	message := createMessage(todayContributionCount, countDays, userName)
-	postSlack(message)
+
+	return todayContributionCount, countDays
 }
 
 func countCommittedDays(query Query) int {
