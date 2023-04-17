@@ -11,6 +11,44 @@ import (
 	"github.com/shurcooL/githubv4"
 )
 
+func TestCountOverAYear(t *testing.T) {
+	type args struct {
+		userName string
+	}
+
+	tests := []struct {
+		name                       string
+		args                       args
+		queryStr                   string
+		wantTodayContributionCount int
+		wantCountDays              int
+	}{
+		{
+			name:                       "queryIsNil",
+			args:                       args{userName: "octocat"},
+			queryStr:                   "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 1, \"weeks\": [{\"contributionDays\": [{\"date\": \"2023-01-01T00:00:00.000+00:00\", \"contributionCount\": 0}]}]}}}}}",
+			wantTodayContributionCount: 0,
+			wantCountDays:              0,
+		},
+	}
+	for _, tt := range tests {
+		mux := http.NewServeMux()
+		client := githubv4.NewClient(&http.Client{Transport: localRoundTripper{handler: mux}})
+		mux.HandleFunc("/graphql", func(w http.ResponseWriter, _ *http.Request) {
+			io.WriteString(w, tt.queryStr)
+		})
+		t.Run(tt.name, func(t *testing.T) {
+			gotTodayContributionCount, gotCountDays := countOverAYear(tt.args.userName, client)
+			if gotTodayContributionCount != tt.wantTodayContributionCount {
+				t.Errorf("add() = %v, want %v", gotTodayContributionCount, tt.wantTodayContributionCount)
+			}
+			if gotCountDays != tt.wantCountDays {
+				t.Errorf("add() = %v, want %v", gotCountDays, tt.wantCountDays)
+			}
+		})
+	}
+}
+
 func TestExecQuery(t *testing.T) {
 	type args struct {
 		ctx       context.Context
