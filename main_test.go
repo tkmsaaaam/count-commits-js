@@ -24,11 +24,18 @@ func TestCountOverAYear(t *testing.T) {
 		wantCountDays              int
 	}{
 		{
-			name:                       "queryIsNil",
+			name:                       "countDaysIsZero",
 			args:                       args{userName: "octocat"},
 			queryStr:                   "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 1, \"weeks\": [{\"contributionDays\": [{\"date\": \"2023-01-01T00:00:00.000+00:00\", \"contributionCount\": 0}]}]}}}}}",
 			wantTodayContributionCount: 0,
 			wantCountDays:              0,
+		},
+		{
+			name:                       "countDaysIsOne",
+			args:                       args{userName: "octocat"},
+			queryStr:                   "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 1, \"weeks\": [{\"contributionDays\": [{\"date\": \"2023-01-01T00:00:00.000+00:00\", \"contributionCount\": 1}]}]}}}}}",
+			wantTodayContributionCount: 0,
+			wantCountDays:              1,
 		},
 	}
 	for _, tt := range tests {
