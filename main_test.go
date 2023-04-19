@@ -37,6 +37,13 @@ func TestCountOverAYear(t *testing.T) {
 			wantTodayContributionCount: 0,
 			wantCountDays:              1,
 		},
+		{
+			name:                       "countDaysIsTwo",
+			args:                       args{userName: "octocat"},
+			queryStr:                   "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 1, \"weeks\": [{\"contributionDays\": [{\"date\": \"2023-01-01T00:00:00.000+00:00\", \"contributionCount\": 1},{\"date\": \"2023-01-02T00:00:00.000+00:00\", \"contributionCount\": 1}]}]}}}}}",
+			wantTodayContributionCount: 0,
+			wantCountDays:              2,
+		},
 	}
 	for _, tt := range tests {
 		mux := http.NewServeMux()
