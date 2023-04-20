@@ -16,6 +16,7 @@ func TestCountOverAYear(t *testing.T) {
 		userName string
 	}
 
+	today := time.Now().Format("2006-01-02")
 	tests := []struct {
 		name                       string
 		args                       args
@@ -24,24 +25,38 @@ func TestCountOverAYear(t *testing.T) {
 		wantCountDays              int
 	}{
 		{
-			name:                       "countDaysIsZero",
+			name:                       "todayContributionCountIsZeroAndCountDaysIsZero",
 			args:                       args{userName: "octocat"},
-			queryStr:                   "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 1, \"weeks\": [{\"contributionDays\": [{\"date\": \"2023-01-01T00:00:00.000+00:00\", \"contributionCount\": 0}]}]}}}}}",
+			queryStr:                   "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 1, \"weeks\": [{\"contributionDays\": [{\"date\": \"2023-01-01\", \"contributionCount\": 0}]}]}}}}}",
 			wantTodayContributionCount: 0,
 			wantCountDays:              0,
 		},
 		{
-			name:                       "countDaysIsOne",
+			name:                       "todayContributionCountIsZeroAndCountDaysIsOne",
 			args:                       args{userName: "octocat"},
-			queryStr:                   "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 1, \"weeks\": [{\"contributionDays\": [{\"date\": \"2023-01-01T00:00:00.000+00:00\", \"contributionCount\": 1}]}]}}}}}",
+			queryStr:                   "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 1, \"weeks\": [{\"contributionDays\": [{\"date\": \"2023-01-01\", \"contributionCount\": 1}]}]}}}}}",
 			wantTodayContributionCount: 0,
 			wantCountDays:              1,
 		},
 		{
-			name:                       "countDaysIsTwo",
+			name:                       "todayContributionCountIsOneAndCountDaysIsOne",
 			args:                       args{userName: "octocat"},
-			queryStr:                   "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 1, \"weeks\": [{\"contributionDays\": [{\"date\": \"2023-01-01T00:00:00.000+00:00\", \"contributionCount\": 1},{\"date\": \"2023-01-02T00:00:00.000+00:00\", \"contributionCount\": 1}]}]}}}}}",
+			queryStr:                   "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 1, \"weeks\": [{\"contributionDays\": [{\"date\": \"" + today + "\", \"contributionCount\": 1}]}]}}}}}",
+			wantTodayContributionCount: 1,
+			wantCountDays:              1,
+		},
+		{
+			name:                       "todayContributionCountIsZeroAndCountDaysIsTwo",
+			args:                       args{userName: "octocat"},
+			queryStr:                   "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 1, \"weeks\": [{\"contributionDays\": [{\"date\": \"2023-01-01\", \"contributionCount\": 1},{\"date\": \"2023-01-02\", \"contributionCount\": 1}]}]}}}}}",
 			wantTodayContributionCount: 0,
+			wantCountDays:              2,
+		},
+		{
+			name:                       "todayContributionCountIsOneAndCountDaysIsTwo",
+			args:                       args{userName: "octocat"},
+			queryStr:                   "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 1, \"weeks\": [{\"contributionDays\": [{\"date\": \"2023-01-01\", \"contributionCount\": 1},{\"date\": \"" + today + "\", \"contributionCount\": 1}]}]}}}}}",
+			wantTodayContributionCount: 1,
 			wantCountDays:              2,
 		},
 	}
