@@ -17,6 +17,27 @@ func TestCountOverAYear(t *testing.T) {
 	}
 
 	today := time.Now().Format("2006-01-02")
+
+	var week = "{\"contributionDays\": ["
+	var week3days = "{\"contributionDays\": [{\"date\": \"2023-01-01\", \"contributionCount\": 1},{\"date\": \"2023-01-01\", \"contributionCount\": 1},{\"date\": \"2023-01-01\", \"contributionCount\": 1}]}"
+	date := "{\"date\": \"2023-01-01\", \"contributionCount\": 1}"
+	for i := 0; i < 7; i++ {
+		week += date
+		if i != 6 {
+			week += ","
+		}
+	}
+	week += "]}"
+	var weeks = "\"weeks\": ["
+	weeks += week3days
+	weeks += ","
+	for i := 0; i < 51; i++ {
+		weeks += week
+		weeks += ","
+	}
+	weeks += week3days
+	weeks += "]"
+
 	tests := []struct {
 		name                       string
 		args                       args
@@ -58,6 +79,13 @@ func TestCountOverAYear(t *testing.T) {
 			queryStr:                   "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 1, \"weeks\": [{\"contributionDays\": [{\"date\": \"2023-01-01\", \"contributionCount\": 1},{\"date\": \"" + today + "\", \"contributionCount\": 1}]}]}}}}}",
 			wantTodayContributionCount: 1,
 			wantCountDays:              2,
+		},
+		{
+			name:                       "todayContributionCountIsZeroAndCountDaysIs363",
+			args:                       args{userName: "octocat"},
+			queryStr:                   "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 1, " + weeks + "}}}}}",
+			wantTodayContributionCount: 0,
+			wantCountDays:              363,
 		},
 	}
 	for _, tt := range tests {
