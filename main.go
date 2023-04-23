@@ -63,7 +63,7 @@ func countOverAYear(userName string, graphqlClient *githubv4.Client) (int, int) 
 	var countDays int
 	var todayContributionCount int
 	var streak int
-	for i := 0; i == 0 || streak >= 364; i++ {
+	for i := 0; i == 0 || (todayContributionCount == 0 && streak == 364) || streak > 364; i++ {
 		from := DateTime{time.Now().AddDate(-(i + 1), 0, 1)}
 		to := DateTime{time.Now().AddDate(-i, 0, 0)}
 		variables := map[string]interface{}{
