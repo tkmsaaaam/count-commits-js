@@ -162,6 +162,49 @@ func (localRoundTripper localRoundTripper) RoundTrip(req *http.Request) (*http.R
 	return ressponseRecorder.Result(), nil
 }
 
+func TestIsContinue(t *testing.T) {
+	type args struct {
+		i                      int
+		todayContributionCount int
+		streak                 int
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "AllArgsAreZero",
+			args: args{i: 0, todayContributionCount: 0, streak: 0},
+			want: true,
+		},
+		{
+			name: "TodayContributionCountIsZeroStreakIs364",
+			args: args{i: 1, todayContributionCount: 0, streak: 364},
+			want: true,
+		},
+		{
+			name: "iIsOneTodayContributionCountIsOneStreakIs365",
+			args: args{i: 1, todayContributionCount: 1, streak: 365},
+			want: true,
+		},
+		{
+			name: "iIsOneTodayContributionCountIsOneStreakIs363",
+			args: args{i: 1, todayContributionCount: 1, streak: 363},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isContinue(tt.args.i, tt.args.todayContributionCount, tt.args.streak)
+			if got != tt.want {
+				t.Errorf("add() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestCountCommits(t *testing.T) {
 	type args struct {
 		query Query
