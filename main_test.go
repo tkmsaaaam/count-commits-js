@@ -190,8 +190,33 @@ func TestIsContinue(t *testing.T) {
 			want: true,
 		},
 		{
+			name: "iIsOneTodayContributionCountIsZeroStreakIs364",
+			args: args{i: 1, todayContributionCount: 0, streak: 364},
+			want: true,
+		},
+		{
+			name: "iIsOneTodayContributionCountIsZeroStreakIs729",
+			args: args{i: 1, todayContributionCount: 0, streak: 729},
+			want: true,
+		},
+		{
+			name: "iIsOneTodayContributionCountIsOneStreakIs365",
+			args: args{i: 1, todayContributionCount: 1, streak: 365},
+			want: true,
+		},
+		{
+			name: "iIsOneTodayContributionCountIsOneStreakIs363",
+			args: args{i: 1, todayContributionCount: 1, streak: 730},
+			want: true,
+		},
+		{
 			name: "iIsOneTodayContributionCountIsOneStreakIs363",
 			args: args{i: 1, todayContributionCount: 1, streak: 363},
+			want: false,
+		},
+		{
+			name: "iIsOneTodayContributionCountIsOneStreakIs545",
+			args: args{i: 1, todayContributionCount: 1, streak: 545},
 			want: false,
 		},
 	}
