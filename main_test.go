@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -37,6 +38,18 @@ func TestCountOverAYear(t *testing.T) {
 	}
 	weeks += week3days
 	weeks += "]"
+
+	var weeks52 = "\"weeks\": ["
+	for i := 0; i < 52; i++ {
+		weeks52 += week
+		if i != 51 {
+			weeks52 += ","
+		}
+	}
+	weeks52 += "]"
+
+	days363 := "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 1, " + weeks + "}}}}}"
+	days364 := "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 1, " + weeks52 + "}}}}}"
 
 	tests := []struct {
 		name                       string
@@ -83,16 +96,28 @@ func TestCountOverAYear(t *testing.T) {
 		{
 			name:                       "todayContributionCountIsZeroAndCountDaysIs363",
 			args:                       args{userName: "octocat"},
-			queryStr:                   "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 1, " + weeks + "}}}}}",
+			queryStr:                   days363,
 			wantTodayContributionCount: 0,
 			wantCountDays:              363,
+		},
+		{
+			name:                       "todayContributionCountIsZeroAndOverAYear",
+			args:                       args{userName: "octocat"},
+			queryStr:                   days364,
+			wantTodayContributionCount: 0,
+			wantCountDays:              727,
 		},
 	}
 	for _, tt := range tests {
 		mux := http.NewServeMux()
 		client := githubv4.NewClient(&http.Client{Transport: localRoundTripper{handler: mux}})
-		mux.HandleFunc("/graphql", func(w http.ResponseWriter, _ *http.Request) {
-			io.WriteString(w, tt.queryStr)
+		mux.HandleFunc("/graphql", func(w http.ResponseWriter, req *http.Request) {
+			reqQuery, _ := io.ReadAll(req.Body)
+			if strings.Index(string(reqQuery), time.Now().Format("2006-01-02")) != -1 {
+				io.WriteString(w, tt.queryStr)
+			} else {
+				io.WriteString(w, days363)
+			}
 		})
 		t.Run(tt.name, func(t *testing.T) {
 			gotTodayContributionCount, gotCountDays := countOverAYear(tt.args.userName, client)
