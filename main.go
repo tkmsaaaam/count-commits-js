@@ -96,7 +96,7 @@ func isContinue(i int, todayContributionCount int, streak int) bool {
 	if todayContributionCount == 0 && j == 364 {
 		return true
 	}
-	if todayContributionCount == 1 && j == 0 {
+	if todayContributionCount > 0 && j == 0 && streak >= i*365 {
 		return true
 	}
 	return false
