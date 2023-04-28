@@ -210,11 +210,6 @@ func TestIsContinue(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "iIsOneTodayContributionCountIsOneStreakIs365",
-			args: args{i: 1, todayContributionCount: 1, streak: 365},
-			want: true,
-		},
-		{
 			name: "iIsOneTodayContributionCountIsZeroStreakIs729",
 			args: args{i: 1, todayContributionCount: 0, streak: 729},
 			want: true,
@@ -225,23 +220,23 @@ func TestIsContinue(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "iIsOneTodayContributionCountIsOneStreakIs363",
+			name: "iIsTwoTodayContributionCountIsOneStreakIs365",
+			args: args{i: 2, todayContributionCount: 1, streak: 365},
+			want: false,
+		},
+		{
+			name: "iIsOneTodayContributionCountIsOneStreakIs730",
 			args: args{i: 1, todayContributionCount: 1, streak: 730},
 			want: true,
 		},
 		{
-			name: "iIsOneTodayContributionCountIsOneStreakIs363",
-			args: args{i: 1, todayContributionCount: 1, streak: 363},
+			name: "iIsOneTodayContributionCountIsOneStreakIs364",
+			args: args{i: 1, todayContributionCount: 1, streak: 364},
 			want: false,
 		},
 		{
-			name: "iIsOneTodayContributionCountIsOneStreakIs545",
-			args: args{i: 1, todayContributionCount: 1, streak: 545},
-			want: false,
-		},
-		{
-			name: "iIsTwoTodayContributionCountIsOneStreakIs545",
-			args: args{i: 2, todayContributionCount: 1, streak: 365},
+			name: "iIsOneTodayContributionCountIsZeroStreakIs363",
+			args: args{i: 1, todayContributionCount: 0, streak: 363},
 			want: false,
 		},
 	}
