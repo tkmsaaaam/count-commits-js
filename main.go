@@ -93,7 +93,7 @@ func isContinue(i int, todayContributionCount int, streak int) bool {
 		return true
 	}
 	j := streak % 365
-	if todayContributionCount == 0 && j == 364 {
+	if todayContributionCount == 0 && j == 365-1 && streak >= (i*365)-1 {
 		return true
 	}
 	if todayContributionCount > 0 && j == 0 && streak >= i*365 {
