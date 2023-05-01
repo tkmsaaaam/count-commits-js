@@ -46,6 +46,7 @@ func TestCountOverAYear(t *testing.T) {
 			weeks52 += ","
 		}
 	}
+	days365 := "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 1, " + weeks52 + ",{\"contributionDays\": [{\"date\": \"" + today + "\", \"contributionCount\": 1}]}]}}}}}"
 	weeks52 += "]"
 
 	days363 := "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"totalContributions\": 1, " + weeks + "}}}}}"
@@ -94,18 +95,18 @@ func TestCountOverAYear(t *testing.T) {
 			wantCountDays:              2,
 		},
 		{
-			name:                       "todayContributionCountIsZeroAndCountDaysIs363",
-			args:                       args{userName: "octocat"},
-			queryStr:                   days363,
-			wantTodayContributionCount: 0,
-			wantCountDays:              363,
-		},
-		{
 			name:                       "todayContributionCountIsZeroAndOverAYear",
 			args:                       args{userName: "octocat"},
 			queryStr:                   days364,
 			wantTodayContributionCount: 0,
 			wantCountDays:              727,
+		},
+		{
+			name:                       "todayContributionCountIsOneAndOverAYear",
+			args:                       args{userName: "octocat"},
+			queryStr:                   days365,
+			wantTodayContributionCount: 1,
+			wantCountDays:              728,
 		},
 	}
 	for _, tt := range tests {
