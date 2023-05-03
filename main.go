@@ -21,8 +21,7 @@ type Week struct {
 }
 
 type ContributionCalendar struct {
-	TotalContributions githubv4.Int
-	Weeks              []Week
+	Weeks []Week
 }
 
 type ContributionsCollection struct {
