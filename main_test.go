@@ -20,24 +20,23 @@ func TestCountOverAYear(t *testing.T) {
 	today := time.Now().Format("2006-01-02")
 
 	var week = "{\"contributionDays\": ["
-	var week3days = "{\"contributionDays\": [{\"date\": \"2023-01-01\", \"contributionCount\": 1},{\"date\": \"2023-01-01\", \"contributionCount\": 1},{\"date\": \"2023-01-01\", \"contributionCount\": 1}]}"
-	date := "{\"date\": \"2023-01-01\", \"contributionCount\": 1}"
+	aDay := "{\"date\": \"2023-01-01\", \"contributionCount\": 1}"
+	var week3days = week + aDay + "," + aDay + "," + aDay + "]}"
 	for i := 0; i < 7; i++ {
-		week += date
+		week += aDay
 		if i != 6 {
 			week += ","
 		}
 	}
 	week += "]}"
+
 	var weeks = "\"weeks\": ["
-	weeks += week3days
-	weeks += ","
+	weeks += week3days + ","
 	for i := 0; i < 51; i++ {
 		weeks += week
 		weeks += ","
 	}
-	weeks += week3days
-	weeks += "]"
+	weeks += week3days + "]"
 
 	var weeks52 = "\"weeks\": ["
 	for i := 0; i < 52; i++ {
