@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -11,6 +12,15 @@ import (
 
 	"github.com/shurcooL/githubv4"
 )
+
+//go:embed testdata/CountOverAYear/todayContributionCountIsZeroAndCountDaysIsZero.json
+var todayContributionCountIsZeroAndCountDaysIsZeroJson string
+
+//go:embed testdata/CountOverAYear/todayContributionCountIsZeroAndCountDaysIsOne.json
+var todayContributionCountIsZeroAndCountDaysIsOneJson string
+
+//go:embed testdata/CountOverAYear/todayContributionCountIsZeroAndCountDaysIsTwo.json
+var todayContributionCountIsZeroAndCountDaysIsTwoJson string
 
 func TestCountOverAYear(t *testing.T) {
 	type args struct {
@@ -61,14 +71,14 @@ func TestCountOverAYear(t *testing.T) {
 		{
 			name:                       "todayContributionCountIsZeroAndCountDaysIsZero",
 			args:                       args{userName: "octocat"},
-			queryStr:                   "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"weeks\": [{\"contributionDays\": [{\"date\": \"2023-01-01\", \"contributionCount\": 0}]}]}}}}}",
+			queryStr:                   todayContributionCountIsZeroAndCountDaysIsZeroJson,
 			wantTodayContributionCount: 0,
 			wantCountDays:              0,
 		},
 		{
 			name:                       "todayContributionCountIsZeroAndCountDaysIsOne",
 			args:                       args{userName: "octocat"},
-			queryStr:                   "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"weeks\": [{\"contributionDays\": [{\"date\": \"2023-01-01\", \"contributionCount\": 1}]}]}}}}}",
+			queryStr:                   todayContributionCountIsZeroAndCountDaysIsOneJson,
 			wantTodayContributionCount: 0,
 			wantCountDays:              1,
 		},
@@ -82,7 +92,7 @@ func TestCountOverAYear(t *testing.T) {
 		{
 			name:                       "todayContributionCountIsZeroAndCountDaysIsTwo",
 			args:                       args{userName: "octocat"},
-			queryStr:                   "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"weeks\": [{\"contributionDays\": [{\"date\": \"2023-01-01\", \"contributionCount\": 1},{\"date\": \"2023-01-02\", \"contributionCount\": 1}]}]}}}}}",
+			queryStr:                   todayContributionCountIsZeroAndCountDaysIsTwoJson,
 			wantTodayContributionCount: 0,
 			wantCountDays:              2,
 		},
@@ -131,6 +141,15 @@ func TestCountOverAYear(t *testing.T) {
 	}
 }
 
+//go:embed testdata/ExecQuery/queryIsNil.json
+var queryIsNilJson string
+
+//go:embed testdata/ExecQuery/totalContributionsIsZero.json
+var totalContributionsIsZeroJson string
+
+//go:embed testdata/ExecQuery/totalContributionsIsOne.json
+var totalContributionsIsOneJson string
+
 func TestExecQuery(t *testing.T) {
 	type args struct {
 		ctx       context.Context
@@ -146,19 +165,19 @@ func TestExecQuery(t *testing.T) {
 		{
 			name:     "queryIsNil",
 			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": githubv4.String("octocat")}},
-			queryStr: "{\"data\": {}}",
+			queryStr: queryIsNilJson,
 			want:     Query{},
 		},
 		{
 			name:     "totalContributionsIsZero",
 			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": githubv4.String("octocat")}},
-			queryStr: "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {}}}}}",
+			queryStr: totalContributionsIsZeroJson,
 			want:     Query{User{ContributionsCollection{ContributionCalendar{}}}},
 		},
 		{
 			name:     "totalContributionsIsOne",
 			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": githubv4.String("octocat")}},
-			queryStr: "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"weeks\": [{\"contributionDays\": [{\"date\": \"2023-01-01\", \"contributionCount\": 1}]}]}}}}}",
+			queryStr: totalContributionsIsOneJson,
 			want:     Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: "2023-01-01"}}}}}}}},
 		},
 	}
