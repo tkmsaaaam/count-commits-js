@@ -22,6 +22,12 @@ var todayContributionCountIsZeroAndCountDaysIsOneJson string
 //go:embed testdata/CountOverAYear/todayContributionCountIsZeroAndCountDaysIsTwo.json
 var todayContributionCountIsZeroAndCountDaysIsTwoJson string
 
+//go:embed testdata/CountOverAYear/days363.json
+var days363 string
+
+//go:embed testdata/CountOverAYear/days364.json
+var days364 string
+
 func TestCountOverAYear(t *testing.T) {
 	type args struct {
 		userName string
@@ -30,36 +36,19 @@ func TestCountOverAYear(t *testing.T) {
 	today := time.Now().Format("2006-01-02")
 
 	var week = "{\"contributionDays\": ["
-	aDay := "{\"date\": \"2023-01-01\", \"contributionCount\": 1}"
-	var week3days = week + aDay + "," + aDay + "," + aDay + "]}"
 	for i := 0; i < 7; i++ {
-		week += aDay
+		week += "{\"date\": \"2023-01-01\", \"contributionCount\": 1}"
 		if i != 6 {
 			week += ","
 		}
 	}
 	week += "]}"
 
-	var weeks = "\"weeks\": ["
-	weeks += week3days + ","
-	for i := 0; i < 51; i++ {
-		weeks += week
-		weeks += ","
-	}
-	weeks += week3days + "]"
-
 	var weeks52 = "\"weeks\": ["
 	for i := 0; i < 52; i++ {
-		weeks52 += week
-		if i != 51 {
-			weeks52 += ","
-		}
+		weeks52 += week + ","
 	}
-	days365 := "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {" + weeks52 + ",{\"contributionDays\": [{\"date\": \"" + today + "\", \"contributionCount\": 1}]}]}}}}}"
-	weeks52 += "]"
-
-	days363 := "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {" + weeks + "}}}}}"
-	days364 := "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {" + weeks52 + "}}}}}"
+	days365 := "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {" + weeks52 + "{\"contributionDays\": [{\"date\": \"" + today + "\", \"contributionCount\": 1}]}]}}}}}"
 
 	tests := []struct {
 		name                       string
