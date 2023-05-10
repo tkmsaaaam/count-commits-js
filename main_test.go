@@ -28,6 +28,9 @@ var days363 string
 //go:embed testdata/CountOverAYear/days364.json
 var days364 string
 
+//go:embed testdata/CountOverAYear/weeks52.json
+var weeks52 string
+
 func TestCountOverAYear(t *testing.T) {
 	type args struct {
 		userName string
@@ -35,20 +38,7 @@ func TestCountOverAYear(t *testing.T) {
 
 	today := time.Now().Format("2006-01-02")
 
-	var week = "{\"contributionDays\": ["
-	for i := 0; i < 7; i++ {
-		week += "{\"date\": \"2023-01-01\", \"contributionCount\": 1}"
-		if i != 6 {
-			week += ","
-		}
-	}
-	week += "]}"
-
-	var weeks52 = "\"weeks\": ["
-	for i := 0; i < 52; i++ {
-		weeks52 += week + ","
-	}
-	days365 := "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {" + weeks52 + "{\"contributionDays\": [{\"date\": \"" + today + "\", \"contributionCount\": 1}]}]}}}}}"
+	days365 := "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"weeks\": [" + weeks52 + ",{\"contributionDays\": [{\"date\": \"" + today + "\", \"contributionCount\": 1}]}]}}}}}"
 
 	tests := []struct {
 		name                       string
