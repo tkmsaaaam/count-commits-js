@@ -1,16 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	_ "embed"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/shurcooL/githubv4"
+	"github.com/slack-go/slack"
+	"github.com/slack-go/slack/slacktest"
 )
 
 //go:embed testdata/CountOverAYear/todayContributionCountIsZeroAndCountDaysIsZero.json
@@ -170,6 +174,65 @@ func TestExecQuery(t *testing.T) {
 			got := Client{client}.execQuery(tt.args.ctx, tt.args.variables)
 			if len(got.User.ContributionsCollection.ContributionCalendar.Weeks) != len(tt.want.User.ContributionsCollection.ContributionCalendar.Weeks) {
 				t.Errorf("add() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestExecQueryError(t *testing.T) {
+	type args struct {
+		ctx       context.Context
+		variables map[string]interface{}
+	}
+
+	tests := []struct {
+		name     string
+		args     args
+		queryStr string
+		want     string
+	}{
+		{
+			name:     "execQueryIsOk",
+			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": githubv4.String("octocat")}},
+			queryStr: queryIsNilJson,
+			want:     "",
+		},
+		{
+			name:     "execQueryIsError",
+			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": githubv4.String("octocat")}},
+			queryStr: queryIsNilJson,
+			want:     "non-200 OK status code: 500 Internal Server Error body: \"Internal Server Error\"",
+		},
+	}
+	for _, tt := range tests {
+		mux := http.NewServeMux()
+		client := githubv4.NewClient(&http.Client{Transport: localRoundTripper{handler: mux}})
+		mux.HandleFunc("/graphql", func(w http.ResponseWriter, _ *http.Request) {
+			if tt.name == "execQueryIsOk" {
+				io.WriteString(w, tt.queryStr)
+			} else {
+				w.WriteHeader(500)
+				io.WriteString(w, "Internal Server Error")
+			}
+		})
+		t.Run(tt.name, func(t *testing.T) {
+			t.Helper()
+
+			orgStdout := os.Stdout
+			defer func() {
+				os.Stdout = orgStdout
+			}()
+			r, w, _ := os.Pipe()
+			os.Stdout = w
+			Client{client}.execQuery(tt.args.ctx, tt.args.variables)
+			w.Close()
+			var buf bytes.Buffer
+			if _, err := buf.ReadFrom(r); err != nil {
+				t.Fatalf("failed to read buf: %v", err)
+			}
+			gotPrint := strings.TrimRight(buf.String(), "\n")
+			if gotPrint != tt.want {
+				t.Errorf("add() = %v, want %v", gotPrint, tt.want)
 			}
 		})
 	}
@@ -364,6 +427,62 @@ func TestCreateMessage(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := createMessage(tt.args.countCommitsToday, tt.args.countDays, tt.args.userName); got != tt.want {
+				t.Errorf("add() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+//go:embed testdata/slack/ok.json
+var postMessageIsOk []byte
+
+//go:embed testdata/slack/error.json
+var postMessageIsError []byte
+
+func TestPostSlack(t *testing.T) {
+	tests := []struct {
+		name   string
+		apiRes []byte
+		want   string
+	}{
+		{
+			name:   "iSOk",
+			apiRes: postMessageIsOk,
+			want:   "",
+		},
+		{
+			name:   "isError",
+			apiRes: postMessageIsError,
+			want:   "too_many_attachments",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ts := slacktest.NewTestServer(func(c slacktest.Customize) {
+				c.Handle("/chat.postMessage", func(w http.ResponseWriter, _ *http.Request) {
+					w.Write(tt.apiRes)
+				})
+			})
+			ts.Start()
+			client := slack.New("testToken", slack.OptionAPIURL(ts.GetAPIURL()))
+
+			t.Helper()
+
+			orgStdout := os.Stdout
+			defer func() {
+				os.Stdout = orgStdout
+			}()
+			r, w, _ := os.Pipe()
+			os.Stdout = w
+			SlackClient{client}.postSlack("message")
+			w.Close()
+			var buf bytes.Buffer
+			if _, err := buf.ReadFrom(r); err != nil {
+				t.Fatalf("failed to read buf: %v", err)
+			}
+			got := strings.TrimRight(buf.String(), "\n")
+			if got != tt.want {
 				t.Errorf("add() = %v, want %v", got, tt.want)
 			}
 		})

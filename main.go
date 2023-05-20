@@ -44,6 +44,10 @@ type DateTime struct {
 	time.Time
 }
 
+type SlackClient struct {
+	*slack.Client
+}
+
 func main() {
 	userName := os.Getenv("GH_USER_NAME")
 	src := oauth2.StaticTokenSource(
@@ -55,7 +59,7 @@ func main() {
 	todayContributionCount, countDays := countOverAYear(userName, graphqlClient)
 
 	message := createMessage(todayContributionCount, countDays, userName)
-	postSlack(message)
+	SlackClient{slack.New(os.Getenv("SLACK_BOT_TOKEN"))}.postSlack(message)
 }
 
 func countOverAYear(userName string, graphqlClient *githubv4.Client) (int, int) {
@@ -142,8 +146,8 @@ func createMessage(todayContributionCount int, countDays int, userName string) s
 	return message
 }
 
-func postSlack(message string) {
-	_, _, err := slack.New(os.Getenv("SLACK_BOT_TOKEN")).PostMessage(os.Getenv("SLACK_CHANNEL_ID"), slack.MsgOptionText(message, false))
+func (client SlackClient) postSlack(message string) {
+	_, _, err := client.PostMessage(os.Getenv("SLACK_CHANNEL_ID"), slack.MsgOptionText(message, false))
 	if err != nil {
 		fmt.Println(err)
 	}
