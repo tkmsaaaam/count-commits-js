@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
-	_ "embed"
+	"embed"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -17,32 +17,24 @@ import (
 	"github.com/slack-go/slack/slacktest"
 )
 
-//go:embed testdata/CountOverAYear/todayContributionCountIsZeroAndCountDaysIsZero.json
-var todayContributionCountIsZeroAndCountDaysIsZeroJson string
-
-//go:embed testdata/CountOverAYear/todayContributionCountIsZeroAndCountDaysIsOne.json
-var todayContributionCountIsZeroAndCountDaysIsOneJson string
-
-//go:embed testdata/CountOverAYear/todayContributionCountIsZeroAndCountDaysIsTwo.json
-var todayContributionCountIsZeroAndCountDaysIsTwoJson string
-
-//go:embed testdata/CountOverAYear/days363.json
-var days363 string
-
-//go:embed testdata/CountOverAYear/days364.json
-var days364 string
-
-//go:embed testdata/CountOverAYear/weeks52.json
-var weeks52 string
+//go:embed testdata/*
+var testData embed.FS
 
 func TestCountOverAYear(t *testing.T) {
 	type args struct {
 		userName string
 	}
 
+	todayContributionCountIsZeroAndCountDaysIsZeroJson, _ := testData.ReadFile("testdata/CountOverAYear/todayContributionCountIsZeroAndCountDaysIsZero.json")
+	todayContributionCountIsZeroAndCountDaysIsOneJson, _ := testData.ReadFile("testdata/CountOverAYear/todayContributionCountIsZeroAndCountDaysIsOne.json")
+	todayContributionCountIsZeroAndCountDaysIsTwoJson, _ := testData.ReadFile("testdata/CountOverAYear/todayContributionCountIsZeroAndCountDaysIsTwo.json")
+	days363, _ := testData.ReadFile("testdata/CountOverAYear/days363.json")
+	days364, _ := testData.ReadFile("testdata/CountOverAYear/days364.json")
+	weeks52, _ := testData.ReadFile("testdata/CountOverAYear/weeks52.json")
+
 	today := time.Now().Format("2006-01-02")
 
-	days365 := "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"weeks\": [" + weeks52 + ",{\"contributionDays\": [{\"date\": \"" + today + "\", \"contributionCount\": 1}]}]}}}}}"
+	days365 := "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"weeks\": [" + string(weeks52) + ",{\"contributionDays\": [{\"date\": \"" + today + "\", \"contributionCount\": 1}]}]}}}}}"
 
 	tests := []struct {
 		name                       string
@@ -54,14 +46,14 @@ func TestCountOverAYear(t *testing.T) {
 		{
 			name:                       "todayContributionCountIsZeroAndCountDaysIsZero",
 			args:                       args{userName: "octocat"},
-			queryStr:                   todayContributionCountIsZeroAndCountDaysIsZeroJson,
+			queryStr:                   string(todayContributionCountIsZeroAndCountDaysIsZeroJson),
 			wantTodayContributionCount: 0,
 			wantCountDays:              0,
 		},
 		{
 			name:                       "todayContributionCountIsZeroAndCountDaysIsOne",
 			args:                       args{userName: "octocat"},
-			queryStr:                   todayContributionCountIsZeroAndCountDaysIsOneJson,
+			queryStr:                   string(todayContributionCountIsZeroAndCountDaysIsOneJson),
 			wantTodayContributionCount: 0,
 			wantCountDays:              1,
 		},
@@ -75,7 +67,7 @@ func TestCountOverAYear(t *testing.T) {
 		{
 			name:                       "todayContributionCountIsZeroAndCountDaysIsTwo",
 			args:                       args{userName: "octocat"},
-			queryStr:                   todayContributionCountIsZeroAndCountDaysIsTwoJson,
+			queryStr:                   string(todayContributionCountIsZeroAndCountDaysIsTwoJson),
 			wantTodayContributionCount: 0,
 			wantCountDays:              2,
 		},
@@ -89,7 +81,7 @@ func TestCountOverAYear(t *testing.T) {
 		{
 			name:                       "todayContributionCountIsZeroAndOverAYear",
 			args:                       args{userName: "octocat"},
-			queryStr:                   days364,
+			queryStr:                   string(days364),
 			wantTodayContributionCount: 0,
 			wantCountDays:              727,
 		},
@@ -109,7 +101,7 @@ func TestCountOverAYear(t *testing.T) {
 			if strings.Index(string(reqQuery), today) != -1 {
 				io.WriteString(w, tt.queryStr)
 			} else {
-				io.WriteString(w, days363)
+				io.WriteString(w, string(days363))
 			}
 		})
 		t.Run(tt.name, func(t *testing.T) {
@@ -123,15 +115,6 @@ func TestCountOverAYear(t *testing.T) {
 		})
 	}
 }
-
-//go:embed testdata/ExecQuery/queryIsNil.json
-var queryIsNilJson string
-
-//go:embed testdata/ExecQuery/totalContributionsIsZero.json
-var totalContributionsIsZeroJson string
-
-//go:embed testdata/ExecQuery/totalContributionsIsOne.json
-var totalContributionsIsOneJson string
 
 func TestExecQuery(t *testing.T) {
 	type args struct {
@@ -148,19 +131,19 @@ func TestExecQuery(t *testing.T) {
 		{
 			name:     "queryIsNil",
 			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": githubv4.String("octocat")}},
-			queryStr: queryIsNilJson,
+			queryStr: "testdata/ExecQuery/queryIsNil.json",
 			want:     Query{},
 		},
 		{
 			name:     "totalContributionsIsZero",
 			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": githubv4.String("octocat")}},
-			queryStr: totalContributionsIsZeroJson,
+			queryStr: "testdata/ExecQuery/totalContributionsIsZero.json",
 			want:     Query{User{ContributionsCollection{ContributionCalendar{}}}},
 		},
 		{
 			name:     "totalContributionsIsOne",
 			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": githubv4.String("octocat")}},
-			queryStr: totalContributionsIsOneJson,
+			queryStr: "testdata/ExecQuery/totalContributionsIsOne.json",
 			want:     Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: "2023-01-01"}}}}}}}},
 		},
 	}
@@ -168,7 +151,8 @@ func TestExecQuery(t *testing.T) {
 		mux := http.NewServeMux()
 		client := githubv4.NewClient(&http.Client{Transport: localRoundTripper{handler: mux}})
 		mux.HandleFunc("/graphql", func(w http.ResponseWriter, _ *http.Request) {
-			io.WriteString(w, tt.queryStr)
+			res, _ := testData.ReadFile(tt.queryStr)
+			io.WriteString(w, string(res))
 		})
 		t.Run(tt.name, func(t *testing.T) {
 			got := Client{client}.execQuery(tt.args.ctx, tt.args.variables)
@@ -194,13 +178,13 @@ func TestExecQueryError(t *testing.T) {
 		{
 			name:     "execQueryIsOk",
 			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": githubv4.String("octocat")}},
-			queryStr: queryIsNilJson,
+			queryStr: "testdata/ExecQuery/queryIsNil.json",
 			want:     "",
 		},
 		{
 			name:     "execQueryIsError",
 			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": githubv4.String("octocat")}},
-			queryStr: queryIsNilJson,
+			queryStr: "testdata/ExecQuery/queryIsNil.json",
 			want:     "non-200 OK status code: 500 Internal Server Error body: \"Internal Server Error\"",
 		},
 	}
@@ -209,7 +193,8 @@ func TestExecQueryError(t *testing.T) {
 		client := githubv4.NewClient(&http.Client{Transport: localRoundTripper{handler: mux}})
 		mux.HandleFunc("/graphql", func(w http.ResponseWriter, _ *http.Request) {
 			if tt.name == "execQueryIsOk" {
-				io.WriteString(w, tt.queryStr)
+				res, _ := testData.ReadFile(tt.queryStr)
+				io.WriteString(w, string(res))
 			} else {
 				w.WriteHeader(500)
 				io.WriteString(w, "Internal Server Error")
@@ -433,26 +418,20 @@ func TestCreateMessage(t *testing.T) {
 	}
 }
 
-//go:embed testdata/slack/ok.json
-var postMessageIsOk []byte
-
-//go:embed testdata/slack/error.json
-var postMessageIsError []byte
-
 func TestPostSlack(t *testing.T) {
 	tests := []struct {
 		name   string
-		apiRes []byte
+		apiRes string
 		want   string
 	}{
 		{
 			name:   "iSOk",
-			apiRes: postMessageIsOk,
+			apiRes: "testdata/slack/ok.json",
 			want:   "",
 		},
 		{
 			name:   "isError",
-			apiRes: postMessageIsError,
+			apiRes: "testdata/slack/error.json",
 			want:   "too_many_attachments",
 		},
 	}
@@ -461,7 +440,8 @@ func TestPostSlack(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ts := slacktest.NewTestServer(func(c slacktest.Customize) {
 				c.Handle("/chat.postMessage", func(w http.ResponseWriter, _ *http.Request) {
-					w.Write(tt.apiRes)
+					res, _ := testData.ReadFile(tt.apiRes)
+					w.Write(res)
 				})
 			})
 			ts.Start()
