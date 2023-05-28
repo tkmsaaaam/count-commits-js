@@ -28,60 +28,59 @@ func TestCountOverAYear(t *testing.T) {
 	todayContributionCountIsZeroAndCountDaysIsZeroJson, _ := testData.ReadFile("testdata/CountOverAYear/todayContributionCountIsZeroAndCountDaysIsZero.json")
 	todayContributionCountIsZeroAndCountDaysIsOneJson, _ := testData.ReadFile("testdata/CountOverAYear/todayContributionCountIsZeroAndCountDaysIsOne.json")
 	todayContributionCountIsZeroAndCountDaysIsTwoJson, _ := testData.ReadFile("testdata/CountOverAYear/todayContributionCountIsZeroAndCountDaysIsTwo.json")
-	days363, _ := testData.ReadFile("testdata/CountOverAYear/days363.json")
 	days364, _ := testData.ReadFile("testdata/CountOverAYear/days364.json")
 	weeks52, _ := testData.ReadFile("testdata/CountOverAYear/weeks52.json")
 
 	today := time.Now().Format("2006-01-02")
 
-	days365 := "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"weeks\": [" + string(weeks52) + ",{\"contributionDays\": [{\"date\": \"" + today + "\", \"contributionCount\": 1}]}]}}}}}"
+	days365 := []byte("{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"weeks\": [" + string(weeks52) + ",{\"contributionDays\": [{\"date\": \"" + today + "\", \"contributionCount\": 1}]}]}}}}}")
 
 	tests := []struct {
 		name                       string
 		args                       args
-		queryStr                   string
+		queryStr                   []byte
 		wantTodayContributionCount int
 		wantCountDays              int
 	}{
 		{
 			name:                       "todayContributionCountIsZeroAndCountDaysIsZero",
 			args:                       args{userName: "octocat"},
-			queryStr:                   string(todayContributionCountIsZeroAndCountDaysIsZeroJson),
+			queryStr:                   todayContributionCountIsZeroAndCountDaysIsZeroJson,
 			wantTodayContributionCount: 0,
 			wantCountDays:              0,
 		},
 		{
 			name:                       "todayContributionCountIsZeroAndCountDaysIsOne",
 			args:                       args{userName: "octocat"},
-			queryStr:                   string(todayContributionCountIsZeroAndCountDaysIsOneJson),
+			queryStr:                   todayContributionCountIsZeroAndCountDaysIsOneJson,
 			wantTodayContributionCount: 0,
 			wantCountDays:              1,
 		},
 		{
 			name:                       "todayContributionCountIsOneAndCountDaysIsOne",
 			args:                       args{userName: "octocat"},
-			queryStr:                   "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"weeks\": [{\"contributionDays\": [{\"date\": \"" + today + "\", \"contributionCount\": 1}]}]}}}}}",
+			queryStr:                   []byte("{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"weeks\": [{\"contributionDays\": [{\"date\": \"" + today + "\", \"contributionCount\": 1}]}]}}}}}"),
 			wantTodayContributionCount: 1,
 			wantCountDays:              1,
 		},
 		{
 			name:                       "todayContributionCountIsZeroAndCountDaysIsTwo",
 			args:                       args{userName: "octocat"},
-			queryStr:                   string(todayContributionCountIsZeroAndCountDaysIsTwoJson),
+			queryStr:                   todayContributionCountIsZeroAndCountDaysIsTwoJson,
 			wantTodayContributionCount: 0,
 			wantCountDays:              2,
 		},
 		{
 			name:                       "todayContributionCountIsOneAndCountDaysIsTwo",
 			args:                       args{userName: "octocat"},
-			queryStr:                   "{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"weeks\": [{\"contributionDays\": [{\"date\": \"2023-01-01\", \"contributionCount\": 1},{\"date\": \"" + today + "\", \"contributionCount\": 1}]}]}}}}}",
+			queryStr:                   []byte("{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"weeks\": [{\"contributionDays\": [{\"date\": \"2023-01-01\", \"contributionCount\": 1},{\"date\": \"" + today + "\", \"contributionCount\": 1}]}]}}}}}"),
 			wantTodayContributionCount: 1,
 			wantCountDays:              2,
 		},
 		{
 			name:                       "todayContributionCountIsZeroAndOverAYear",
 			args:                       args{userName: "octocat"},
-			queryStr:                   string(days364),
+			queryStr:                   days364,
 			wantTodayContributionCount: 0,
 			wantCountDays:              727,
 		},
@@ -99,9 +98,10 @@ func TestCountOverAYear(t *testing.T) {
 		mux.HandleFunc("/graphql", func(w http.ResponseWriter, req *http.Request) {
 			reqQuery, _ := io.ReadAll(req.Body)
 			if strings.Index(string(reqQuery), today) != -1 {
-				io.WriteString(w, tt.queryStr)
+				w.Write(tt.queryStr)
 			} else {
-				io.WriteString(w, string(days363))
+				days363, _ := testData.ReadFile("testdata/CountOverAYear/days363.json")
+				w.Write(days363)
 			}
 		})
 		t.Run(tt.name, func(t *testing.T) {
@@ -152,7 +152,7 @@ func TestExecQuery(t *testing.T) {
 		client := githubv4.NewClient(&http.Client{Transport: localRoundTripper{handler: mux}})
 		mux.HandleFunc("/graphql", func(w http.ResponseWriter, _ *http.Request) {
 			res, _ := testData.ReadFile(tt.queryStr)
-			io.WriteString(w, string(res))
+			w.Write(res)
 		})
 		t.Run(tt.name, func(t *testing.T) {
 			got := Client{client}.execQuery(tt.args.ctx, tt.args.variables)
@@ -194,10 +194,10 @@ func TestExecQueryError(t *testing.T) {
 		mux.HandleFunc("/graphql", func(w http.ResponseWriter, _ *http.Request) {
 			if tt.name == "execQueryIsOk" {
 				res, _ := testData.ReadFile(tt.queryStr)
-				io.WriteString(w, string(res))
+				w.Write(res)
 			} else {
 				w.WriteHeader(500)
-				io.WriteString(w, "Internal Server Error")
+				w.Write([]byte("Internal Server Error"))
 			}
 		})
 		t.Run(tt.name, func(t *testing.T) {
