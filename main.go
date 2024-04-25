@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -130,7 +131,7 @@ func (client Client) execQuery(ctx context.Context, variables map[string]interfa
 	var query Query
 	graphqlErr := client.Query(ctx, &query, variables)
 	if graphqlErr != nil {
-		fmt.Println(graphqlErr)
+		log.Printf("query is error. %v", graphqlErr)
 	}
 	return query
 }
@@ -149,6 +150,6 @@ func createMessage(todayContributionCount int, countDays int, userName string) s
 func (client SlackClient) postSlack(message string) {
 	_, _, err := client.PostMessage(os.Getenv("SLACK_CHANNEL_ID"), slack.MsgOptionText(message, false))
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("can not post message. %v", err)
 	}
 }

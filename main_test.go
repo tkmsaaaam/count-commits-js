@@ -5,6 +5,7 @@ import (
 	"context"
 	"embed"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -185,7 +186,7 @@ func TestExecQueryError(t *testing.T) {
 			name:     "execQueryIsError",
 			args:     args{ctx: context.Background(), variables: map[string]interface{}{"name": githubv4.String("octocat")}},
 			queryStr: "testdata/ExecQuery/queryIsNil.json",
-			want:     "non-200 OK status code: 500 Internal Server Error body: \"Internal Server Error\"",
+			want:     "query is error. non-200 OK status code: 500 Internal Server Error body: \"Internal Server Error\"",
 		},
 	}
 	for _, tt := range tests {
@@ -203,18 +204,16 @@ func TestExecQueryError(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Helper()
 
-			orgStdout := os.Stdout
-			defer func() {
-				os.Stdout = orgStdout
-			}()
-			r, w, _ := os.Pipe()
-			os.Stdout = w
-			Client{client}.execQuery(tt.args.ctx, tt.args.variables)
-			w.Close()
 			var buf bytes.Buffer
-			if _, err := buf.ReadFrom(r); err != nil {
-				t.Fatalf("failed to read buf: %v", err)
-			}
+			log.SetOutput(&buf)
+			defaultFlags := log.Flags()
+			log.SetFlags(0)
+			defer func() {
+				log.SetOutput(os.Stderr)
+				log.SetFlags(defaultFlags)
+				buf.Reset()
+			}()
+			Client{client}.execQuery(tt.args.ctx, tt.args.variables)
 			gotPrint := strings.TrimRight(buf.String(), "\n")
 			if gotPrint != tt.want {
 				t.Errorf("add() = %v, want %v", gotPrint, tt.want)
@@ -432,7 +431,7 @@ func TestPostSlack(t *testing.T) {
 		{
 			name:   "isError",
 			apiRes: "testdata/slack/error.json",
-			want:   "too_many_attachments",
+			want:   "can not post message. too_many_attachments",
 		},
 	}
 
@@ -449,18 +448,16 @@ func TestPostSlack(t *testing.T) {
 
 			t.Helper()
 
-			orgStdout := os.Stdout
-			defer func() {
-				os.Stdout = orgStdout
-			}()
-			r, w, _ := os.Pipe()
-			os.Stdout = w
-			SlackClient{client}.postSlack("message")
-			w.Close()
 			var buf bytes.Buffer
-			if _, err := buf.ReadFrom(r); err != nil {
-				t.Fatalf("failed to read buf: %v", err)
-			}
+			log.SetOutput(&buf)
+			defaultFlags := log.Flags()
+			log.SetFlags(0)
+			defer func() {
+				log.SetOutput(os.Stderr)
+				log.SetFlags(defaultFlags)
+				buf.Reset()
+			}()
+			SlackClient{client}.postSlack("message")
 			got := strings.TrimRight(buf.String(), "\n")
 			if got != tt.want {
 				t.Errorf("add() = %v, want %v", got, tt.want)
