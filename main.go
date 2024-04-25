@@ -115,7 +115,10 @@ func countCommittedDays(query Query) int {
 		for j := daysLength - 1; j >= 0; j-- {
 			day := query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays[j]
 			if day.ContributionCount == 0 {
+				d, _ := time.Parse("2006-01-02", day.Date)
 				if now.Format("2006-01-02") == day.Date {
+					continue
+				} else if (d.After(now)) {
 					continue
 				} else {
 					return countDays
