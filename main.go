@@ -41,10 +41,6 @@ type Client struct {
 	*githubv4.Client
 }
 
-type DateTime struct {
-	time.Time
-}
-
 type SlackClient struct {
 	*slack.Client
 }
@@ -68,8 +64,8 @@ func countOverAYear(userName string, graphqlClient *githubv4.Client) (int, int) 
 	var todayContributionCount int
 	var streak int
 	for i := 0; isContinue(i, todayContributionCount, streak); i++ {
-		from := DateTime{time.Now().AddDate(-(i + 1), 0, 1)}
-		to := DateTime{time.Now().AddDate(-i, 0, 0)}
+		from := githubv4.DateTime{Time: time.Now().AddDate(-(i + 1), 0, 1)}
+		to := githubv4.DateTime{Time: time.Now().AddDate(-i, 0, 0)}
 		variables := map[string]interface{}{
 			"name": githubv4.String(userName),
 			"from": githubv4.DateTime(from),
@@ -118,7 +114,7 @@ func countCommittedDays(query Query) int {
 				d, _ := time.Parse("2006-01-02", day.Date)
 				if now.Format("2006-01-02") == day.Date {
 					continue
-				} else if (d.After(now)) {
+				} else if d.After(now) {
 					continue
 				} else {
 					return countDays
