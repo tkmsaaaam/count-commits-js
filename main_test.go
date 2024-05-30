@@ -106,7 +106,7 @@ func TestCountOverAYear(t *testing.T) {
 			}
 		})
 		t.Run(tt.name, func(t *testing.T) {
-			gotTodayContributionCount, gotCountDays := countOverAYear(tt.args.userName, client)
+			gotTodayContributionCount, gotCountDays, _ := countOverAYear(tt.args.userName, client)
 			if gotTodayContributionCount != tt.wantTodayContributionCount {
 				t.Errorf("add() = %v, want %v", gotTodayContributionCount, tt.wantTodayContributionCount)
 			}
@@ -367,7 +367,7 @@ func TestCountCommits(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := countCommittedDays(tt.args.query)
+			got, _ := countCommittedDays(tt.args.query)
 			if got != tt.want {
 				t.Errorf("add() = %v, want %v", got, tt.want)
 			}
@@ -379,6 +379,7 @@ func TestCreateMessage(t *testing.T) {
 	type args struct {
 		countCommitsToday int
 		countDays         int
+		total             int
 		userName          string
 	}
 
@@ -389,28 +390,28 @@ func TestCreateMessage(t *testing.T) {
 	}{
 		{
 			name: "notCommitedAndNoStreak",
-			args: args{countCommitsToday: 0, countDays: 0, userName: "octocat"},
-			want: "<!channel> 今日はまだコミットしていません！\n連続コミット日数は0\nhttps://github.com/octocat",
+			args: args{countCommitsToday: 0, countDays: 0, total: 0, userName: "octocat"},
+			want: "<!channel> 今日はまだコミットしていません！\n連続コミット日数は0\n合計コミット数は0\n平均コミット数は0.000000\nhttps://github.com/octocat",
 		},
 		{
 			name: "notCommitedAnd",
-			args: args{countCommitsToday: 0, countDays: 1, userName: "octocat"},
-			want: "<!channel> 今日はまだコミットしていません！\n連続コミット日数は1\nhttps://github.com/octocat",
+			args: args{countCommitsToday: 0, countDays: 1, total: 1, userName: "octocat"},
+			want: "<!channel> 今日はまだコミットしていません！\n連続コミット日数は1\n合計コミット数は1\n平均コミット数は1.000000\nhttps://github.com/octocat",
 		},
 		{
 			name: "commitedNoStreak",
-			args: args{countCommitsToday: 1, countDays: 0, userName: "octocat"},
-			want: "\n今日のコミット数は1\n連続コミット日数は0\nhttps://github.com/octocat",
+			args: args{countCommitsToday: 1, countDays: 0, total: 1, userName: "octocat"},
+			want: "\n今日のコミット数は1\n連続コミット日数は0\n合計コミット数は1\n平均コミット数は0.000000\nhttps://github.com/octocat",
 		},
 		{
 			name: "commited",
-			args: args{countCommitsToday: 1, countDays: 1, userName: "octocat"},
-			want: "\n今日のコミット数は1\n連続コミット日数は1\nhttps://github.com/octocat",
+			args: args{countCommitsToday: 1, countDays: 1, total: 1, userName: "octocat"},
+			want: "\n今日のコミット数は1\n連続コミット日数は1\n合計コミット数は1\n平均コミット数は1.000000\nhttps://github.com/octocat",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := createMessage(tt.args.countCommitsToday, tt.args.countDays, tt.args.userName); got != tt.want {
+			if got := createMessage(tt.args.countCommitsToday, tt.args.countDays, tt.args.total, tt.args.userName); got != tt.want {
 				t.Errorf("add() = %v, want %v", got, tt.want)
 			}
 		})
