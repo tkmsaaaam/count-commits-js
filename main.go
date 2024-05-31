@@ -147,7 +147,7 @@ func createMessage(todayContributionCount, countDays, total int, userName string
 		message = fmt.Sprintf("\n今日のコミット数は%d", todayContributionCount)
 	}
 	var average float64
-	if total == 0 || countDays == 0 {
+	if countDays == 0 {
 		average = 0
 	} else {
 		average = float64(total) / float64(countDays)
