@@ -59,19 +59,23 @@ func main() {
 	SlackClient{slack.New(os.Getenv("SLACK_BOT_TOKEN"))}.postSlack(message)
 }
 
+var offset = 0
+var lastCount int
+
 func countOverAYear(userName string, graphqlClient *githubv4.Client) (int, int, int) {
 	var countDays int
 	var todayContributionCount int
-	var streak int
 	var total int
-	for i := 0; isContinue(i, todayContributionCount, streak); i++ {
-		from := githubv4.DateTime{Time: time.Now().AddDate(-(i + 1), 0, 1)}
-		to := githubv4.DateTime{Time: time.Now().AddDate(-i, 0, 0)}
+	for i := 0; isContinue(i); i++ {
+		const daysLength = 365
+		from := githubv4.DateTime{Time: time.Now().AddDate(0, 0, offset-daysLength)}
+		to := githubv4.DateTime{Time: time.Now().AddDate(0, 0, offset)}
 		variables := map[string]interface{}{
 			"name": githubv4.String(userName),
 			"from": githubv4.DateTime(from),
 			"to":   githubv4.DateTime(to),
 		}
+		offset = offset - daysLength
 		query := Client{graphqlClient}.execQuery(context.Background(), variables)
 		if i == 0 {
 			w := len(query.User.ContributionsCollection.ContributionCalendar.Weeks) - 1
@@ -82,26 +86,21 @@ func countOverAYear(userName string, graphqlClient *githubv4.Client) (int, int, 
 			}
 		}
 		count, sum := countCommittedDays(query)
-		streak = count
-		countDays += streak
+		countDays += count
 		total += sum
 	}
 
 	return todayContributionCount, countDays, total
 }
 
-func isContinue(i int, todayContributionCount int, streak int) bool {
+func isContinue(i int) bool {
 	if i == 0 {
 		return true
 	}
-	j := streak % 365
-	if todayContributionCount == 0 && j == 365-1 && streak >= (i*365)-1 {
-		return true
+	if lastCount == 0 {
+		return false
 	}
-	if todayContributionCount > 0 && j == 0 && streak >= i*365 {
-		return true
-	}
-	return false
+	return true
 }
 
 func countCommittedDays(query Query) (int, int) {
@@ -113,6 +112,7 @@ func countCommittedDays(query Query) (int, int) {
 		daysLength := len(query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays)
 		for j := daysLength - 1; j >= 0; j-- {
 			day := query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays[j]
+			lastCount = day.ContributionCount
 			if day.ContributionCount == 0 {
 				d, _ := time.Parse("2006-01-02", day.Date)
 				if now.Format("2006-01-02") == day.Date {
