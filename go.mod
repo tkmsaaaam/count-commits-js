@@ -4,8 +4,8 @@ go 1.21
 
 require (
 	github.com/shurcooL/githubv4 v0.0.0-20240727222349-48295856cce7
-	github.com/slack-go/slack v0.14.0
-	golang.org/x/oauth2 v0.22.0
+	github.com/slack-go/slack v0.15.0
+	golang.org/x/oauth2 v0.23.0
 )
 
 require (
