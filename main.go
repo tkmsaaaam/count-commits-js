@@ -53,7 +53,9 @@ func main() {
 	httpClient := oauth2.NewClient(context.Background(), src)
 	graphqlClient := githubv4.NewClient(httpClient)
 
-	todayContributionCount, countDays, total := countOverAYear(userName, graphqlClient)
+	now := time.Now()
+
+	todayContributionCount, countDays, total := countOverAYear(userName, graphqlClient, now)
 
 	message := createMessage(todayContributionCount, countDays, total, userName)
 	SlackClient{slack.New(os.Getenv("SLACK_BOT_TOKEN"))}.postSlack(message)
@@ -62,11 +64,11 @@ func main() {
 var offset = 0
 var lastCount int
 
-func countOverAYear(userName string, graphqlClient *githubv4.Client) (int, int, int) {
+func countOverAYear(userName string, graphqlClient *githubv4.Client, now time.Time) (int, int, int) {
 	var countDays int
 	var todayContributionCount int
 	var total int
-	for i := 0; isContinue(i); i++ {
+	for i := 0; isContinue(i, lastCount); i++ {
 		const daysLength = 365
 		from := githubv4.DateTime{Time: time.Now().AddDate(0, 0, offset-daysLength)}
 		to := githubv4.DateTime{Time: time.Now().AddDate(0, 0, offset)}
@@ -81,7 +83,7 @@ func countOverAYear(userName string, graphqlClient *githubv4.Client) (int, int, 
 			w := len(query.User.ContributionsCollection.ContributionCalendar.Weeks) - 1
 			c := len(query.User.ContributionsCollection.ContributionCalendar.Weeks[w].ContributionDays) - 1
 			today := query.User.ContributionsCollection.ContributionCalendar.Weeks[w].ContributionDays[c]
-			if today.Date == time.Now().Format("2006-01-02") {
+			if today.Date == now.Format("2006-01-02") {
 				todayContributionCount = today.ContributionCount
 			}
 		}
@@ -93,11 +95,11 @@ func countOverAYear(userName string, graphqlClient *githubv4.Client) (int, int, 
 	return todayContributionCount, countDays, total
 }
 
-func isContinue(i int) bool {
+func isContinue(i, l int) bool {
 	if i == 0 {
 		return true
 	}
-	if lastCount == 0 {
+	if l == 0 {
 		return false
 	}
 	return true

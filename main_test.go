@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"embed"
-	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -26,15 +25,8 @@ func TestCountOverAYear(t *testing.T) {
 		userName string
 	}
 
-	todayContributionCountIsZeroAndCountDaysIsZeroJson, _ := testData.ReadFile("testdata/CountOverAYear/todayContributionCountIsZeroAndCountDaysIsZero.json")
-	todayContributionCountIsZeroAndCountDaysIsOneJson, _ := testData.ReadFile("testdata/CountOverAYear/todayContributionCountIsZeroAndCountDaysIsOne.json")
-	todayContributionCountIsZeroAndCountDaysIsTwoJson, _ := testData.ReadFile("testdata/CountOverAYear/todayContributionCountIsZeroAndCountDaysIsTwo.json")
-	days364, _ := testData.ReadFile("testdata/CountOverAYear/days364.json")
-	weeks52, _ := testData.ReadFile("testdata/CountOverAYear/weeks52.json")
-
-	today := time.Now().Format("2006-01-02")
-
-	days365 := []byte("{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"weeks\": [" + string(weeks52) + ",{\"contributionDays\": [{\"date\": \"" + today + "\", \"contributionCount\": 1}]}]}}}}}")
+	todayAndYesterDayArezeroJson, _ := testData.ReadFile("testdata/CountOverAYear/todayAndYesterdayAreZero.json")
+	todayIsOneJson, _ := testData.ReadFile("testdata/CountOverAYear/todayIsOne.json")
 
 	tests := []struct {
 		name                       string
@@ -44,69 +36,28 @@ func TestCountOverAYear(t *testing.T) {
 		wantCountDays              int
 	}{
 		{
-			name:                       "todayContributionCountIsZeroAndCountDaysIsZero",
+			name:                       "todayAndYesterdayAreZero",
 			args:                       args{userName: "octocat"},
-			queryStr:                   todayContributionCountIsZeroAndCountDaysIsZeroJson,
+			queryStr:                   todayAndYesterDayArezeroJson,
 			wantTodayContributionCount: 0,
 			wantCountDays:              0,
 		},
 		{
-			name:                       "todayContributionCountIsZeroAndCountDaysIsOne",
+			name:                       "todayIsOne",
 			args:                       args{userName: "octocat"},
-			queryStr:                   todayContributionCountIsZeroAndCountDaysIsOneJson,
-			wantTodayContributionCount: 0,
-			wantCountDays:              1,
-		},
-		{
-			name:                       "todayContributionCountIsOneAndCountDaysIsOne",
-			args:                       args{userName: "octocat"},
-			queryStr:                   []byte("{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"weeks\": [{\"contributionDays\": [{\"date\": \"" + today + "\", \"contributionCount\": 1}]}]}}}}}"),
+			queryStr:                   todayIsOneJson,
 			wantTodayContributionCount: 1,
 			wantCountDays:              1,
-		},
-		{
-			name:                       "todayContributionCountIsZeroAndCountDaysIsTwo",
-			args:                       args{userName: "octocat"},
-			queryStr:                   todayContributionCountIsZeroAndCountDaysIsTwoJson,
-			wantTodayContributionCount: 0,
-			wantCountDays:              2,
-		},
-		{
-			name:                       "todayContributionCountIsOneAndCountDaysIsTwo",
-			args:                       args{userName: "octocat"},
-			queryStr:                   []byte("{\"data\": {\"user\": {\"contributionsCollection\": {\"contributionCalendar\": {\"weeks\": [{\"contributionDays\": [{\"date\": \"2023-01-01\", \"contributionCount\": 1},{\"date\": \"" + today + "\", \"contributionCount\": 1}]}]}}}}}"),
-			wantTodayContributionCount: 1,
-			wantCountDays:              2,
-		},
-		{
-			name:                       "todayContributionCountIsZeroAndOverAYear",
-			args:                       args{userName: "octocat"},
-			queryStr:                   days364,
-			wantTodayContributionCount: 0,
-			wantCountDays:              727,
-		},
-		{
-			name:                       "todayContributionCountIsOneAndOverAYear",
-			args:                       args{userName: "octocat"},
-			queryStr:                   days365,
-			wantTodayContributionCount: 1,
-			wantCountDays:              728,
 		},
 	}
 	for _, tt := range tests {
 		mux := http.NewServeMux()
 		client := githubv4.NewClient(&http.Client{Transport: localRoundTripper{handler: mux}})
 		mux.HandleFunc("/graphql", func(w http.ResponseWriter, req *http.Request) {
-			reqQuery, _ := io.ReadAll(req.Body)
-			if strings.Index(string(reqQuery), today) != -1 {
-				w.Write(tt.queryStr)
-			} else {
-				days363, _ := testData.ReadFile("testdata/CountOverAYear/days363.json")
-				w.Write(days363)
-			}
+			w.Write(tt.queryStr)
 		})
 		t.Run(tt.name, func(t *testing.T) {
-			gotTodayContributionCount, gotCountDays, _ := countOverAYear(tt.args.userName, client)
+			gotTodayContributionCount, gotCountDays, _ := countOverAYear(tt.args.userName, client, time.Date(2023, 1, 3, 12, 0, 0, 0, time.Local))
 			if gotTodayContributionCount != tt.wantTodayContributionCount {
 				t.Errorf("add() = %v, want %v", gotTodayContributionCount, tt.wantTodayContributionCount)
 			}
@@ -234,9 +185,8 @@ func (localRoundTripper localRoundTripper) RoundTrip(req *http.Request) (*http.R
 
 func TestIsContinue(t *testing.T) {
 	type args struct {
-		i                      int
-		todayContributionCount int
-		streak                 int
+		i         int
+		lastCount int
 	}
 
 	tests := []struct {
@@ -245,49 +195,24 @@ func TestIsContinue(t *testing.T) {
 		want bool
 	}{
 		{
-			name: "AllArgsAreZero",
-			args: args{i: 0, todayContributionCount: 0, streak: 0},
+			name: "IIsZero",
+			args: args{i: 0, lastCount: 0},
 			want: true,
 		},
 		{
-			name: "TodayContributionCountIsZeroStreakIs364",
-			args: args{i: 1, todayContributionCount: 0, streak: 364},
-			want: true,
-		},
-		{
-			name: "iIsOneTodayContributionCountIsZeroStreakIs729",
-			args: args{i: 1, todayContributionCount: 0, streak: 729},
-			want: true,
-		},
-		{
-			name: "iIsOneTodayContributionCountIsOneStreakIs365",
-			args: args{i: 1, todayContributionCount: 1, streak: 365},
-			want: true,
-		},
-		{
-			name: "iIsTwoTodayContributionCountIsOneStreakIs365",
-			args: args{i: 2, todayContributionCount: 1, streak: 365},
+			name: "LastCountIsZero",
+			args: args{i: 1, lastCount: 0},
 			want: false,
 		},
 		{
-			name: "iIsOneTodayContributionCountIsOneStreakIs730",
-			args: args{i: 1, todayContributionCount: 1, streak: 730},
+			name: "LastCountIsOne",
+			args: args{i: 1, lastCount: 1},
 			want: true,
-		},
-		{
-			name: "iIsOneTodayContributionCountIsOneStreakIs364",
-			args: args{i: 1, todayContributionCount: 1, streak: 364},
-			want: false,
-		},
-		{
-			name: "iIsOneTodayContributionCountIsZeroStreakIs363",
-			args: args{i: 1, todayContributionCount: 0, streak: 363},
-			want: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := isContinue(tt.args.i, tt.args.todayContributionCount, tt.args.streak)
+			got := isContinue(tt.args.i, tt.args.lastCount)
 			if got != tt.want {
 				t.Errorf("add() = %v, want %v", got, tt.want)
 			}
