@@ -26,35 +26,72 @@ func TestCountOverAYear(t *testing.T) {
 	}
 
 	todayAndYesterDayArezeroJson, _ := testData.ReadFile("testdata/CountOverAYear/todayAndYesterdayAreZero.json")
+	todayAndYesterDayArezero := make([][]byte, 0)
+	todayAndYesterDayArezero = append(todayAndYesterDayArezero, todayAndYesterDayArezeroJson)
 	todayIsOneJson, _ := testData.ReadFile("testdata/CountOverAYear/todayIsOne.json")
+	todayIsOne := make([][]byte, 0)
+	todayIsOne = append(todayIsOne, todayIsOneJson)
+	todayIsZeroYesterdayIsOneJson, _ := testData.ReadFile("testdata/CountOverAYear/todayIsZeroYesterdayIsOne.json")
+	todayIsZeroYesterdayIsOne := make([][]byte, 0)
+	todayIsZeroYesterdayIsOne = append(todayIsZeroYesterdayIsOne, todayIsZeroYesterdayIsOneJson)
+	todayAndYesterDayAreOneJson, _ := testData.ReadFile("testdata/CountOverAYear/todayAndYesterdayAreOne.json")
+	todayAndYesterDayAreOne := make([][]byte, 0)
+	todayAndYesterDayAreOne = append(todayAndYesterDayAreOne, todayAndYesterDayAreOneJson)
+	allOneJson, _ := testData.ReadFile("testdata/CountOverAYear/allOne.json")
+	overAYear := make([][]byte, 0)
+	overAYear = append(overAYear, allOneJson)
+	overAYear = append(overAYear, todayAndYesterDayAreOneJson)
 
 	tests := []struct {
 		name                       string
 		args                       args
-		queryStr                   []byte
+		queryStr                   [][]byte
 		wantTodayContributionCount int
 		wantCountDays              int
 	}{
 		{
 			name:                       "todayAndYesterdayAreZero",
 			args:                       args{userName: "octocat"},
-			queryStr:                   todayAndYesterDayArezeroJson,
+			queryStr:                   todayAndYesterDayArezero,
 			wantTodayContributionCount: 0,
 			wantCountDays:              0,
 		},
 		{
+			name:                       "todayIsZeroYesterdayIsOne",
+			args:                       args{userName: "octocat"},
+			queryStr:                   todayIsZeroYesterdayIsOne,
+			wantTodayContributionCount: 0,
+			wantCountDays:              362,
+		},
+		{
 			name:                       "todayIsOne",
 			args:                       args{userName: "octocat"},
-			queryStr:                   todayIsOneJson,
+			queryStr:                   todayIsOne,
 			wantTodayContributionCount: 1,
 			wantCountDays:              1,
+		},
+		{
+			name:                       "todayAndYesterDayAreOne",
+			args:                       args{userName: "octocat"},
+			queryStr:                   todayAndYesterDayAreOne,
+			wantTodayContributionCount: 1,
+			wantCountDays:              363,
+		},
+		{
+			name:                       "overAYear",
+			args:                       args{userName: "octocat"},
+			queryStr:                   overAYear,
+			wantTodayContributionCount: 1,
+			wantCountDays:              727,
 		},
 	}
 	for _, tt := range tests {
 		mux := http.NewServeMux()
 		client := githubv4.NewClient(&http.Client{Transport: localRoundTripper{handler: mux}})
+		var i = 0
 		mux.HandleFunc("/graphql", func(w http.ResponseWriter, req *http.Request) {
-			w.Write(tt.queryStr)
+			w.Write(tt.queryStr[i])
+			i++
 		})
 		t.Run(tt.name, func(t *testing.T) {
 			gotTodayContributionCount, gotCountDays, _ := countOverAYear(tt.args.userName, client, time.Date(2023, 1, 3, 12, 0, 0, 0, time.Local))
@@ -225,7 +262,8 @@ func TestCountCommits(t *testing.T) {
 		query Query
 	}
 
-	today := time.Now().Format("2006-01-02")
+	now := time.Now()
+	today := now.Format("2006-01-02")
 	yesterday := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
 	twoDaysAgo := time.Now().AddDate(0, 0, -2).Format("2006-01-02")
 
@@ -292,7 +330,7 @@ func TestCountCommits(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, _ := countCommittedDays(tt.args.query)
+			got, _ := countCommittedDays(tt.args.query, now)
 			if got != tt.want {
 				t.Errorf("add() = %v, want %v", got, tt.want)
 			}

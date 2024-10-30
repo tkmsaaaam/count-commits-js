@@ -87,7 +87,7 @@ func countOverAYear(userName string, graphqlClient *githubv4.Client, now time.Ti
 				todayContributionCount = today.ContributionCount
 			}
 		}
-		count, sum := countCommittedDays(query)
+		count, sum := countCommittedDays(query, now)
 		countDays += count
 		total += sum
 	}
@@ -105,9 +105,8 @@ func isContinue(i, l int) bool {
 	return true
 }
 
-func countCommittedDays(query Query) (int, int) {
+func countCommittedDays(query Query, now time.Time) (int, int) {
 	weeksLength := len(query.User.ContributionsCollection.ContributionCalendar.Weeks)
-	now := time.Now()
 	var countDays int
 	var sumCommits int
 	for i := weeksLength - 1; i >= 0; i-- {
