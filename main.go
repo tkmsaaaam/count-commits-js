@@ -54,20 +54,22 @@ func main() {
 	graphqlClient := githubv4.NewClient(httpClient)
 
 	now := time.Now()
+	earliestDay := time.Now()
 
-	todayContributionCount, countDays, total := countOverAYear(userName, graphqlClient, now)
+	todayContributionCount, countDays, total, d := countOverAYear(userName, graphqlClient, now, &earliestDay)
 
-	message := createMessage(todayContributionCount, countDays, total, userName)
+	message := createMessage(todayContributionCount, countDays, total, userName, d)
 	SlackClient{slack.New(os.Getenv("SLACK_BOT_TOKEN"))}.postSlack(message)
 }
 
 var offset = 0
 var lastCount int
 
-func countOverAYear(userName string, graphqlClient *githubv4.Client, now time.Time) (int, int, int) {
+func countOverAYear(userName string, graphqlClient *githubv4.Client, now time.Time, ed *time.Time) (int, int, int, *time.Time) {
 	var countDays int
 	var todayContributionCount int
 	var total int
+	var earliestDay *time.Time = nil
 	for i := 0; isContinue(i, lastCount); i++ {
 		const daysLength = 365
 		from := githubv4.DateTime{Time: time.Now().AddDate(0, 0, offset-daysLength)}
@@ -87,12 +89,15 @@ func countOverAYear(userName string, graphqlClient *githubv4.Client, now time.Ti
 				todayContributionCount = today.ContributionCount
 			}
 		}
-		count, sum := countCommittedDays(query, now)
+		count, sum, d := countCommittedDays(query, now, ed)
 		countDays += count
 		total += sum
+		if earliestDay == nil || d.Before(*earliestDay) {
+			earliestDay = d
+		}
 	}
 
-	return todayContributionCount, countDays, total
+	return todayContributionCount, countDays, total, earliestDay
 }
 
 func isContinue(i, l int) bool {
@@ -105,7 +110,7 @@ func isContinue(i, l int) bool {
 	return true
 }
 
-func countCommittedDays(query Query, now time.Time) (int, int) {
+func countCommittedDays(query Query, now time.Time, ed *time.Time) (int, int, *time.Time) {
 	weeksLength := len(query.User.ContributionsCollection.ContributionCalendar.Weeks)
 	var countDays int
 	var sumCommits int
@@ -114,21 +119,24 @@ func countCommittedDays(query Query, now time.Time) (int, int) {
 		for j := daysLength - 1; j >= 0; j-- {
 			day := query.User.ContributionsCollection.ContributionCalendar.Weeks[i].ContributionDays[j]
 			lastCount = day.ContributionCount
+			d, _ := time.Parse("2006-01-02", day.Date)
 			if day.ContributionCount == 0 {
-				d, _ := time.Parse("2006-01-02", day.Date)
 				if now.Format("2006-01-02") == day.Date {
 					continue
 				} else if d.After(now) {
 					continue
 				} else {
-					return countDays, sumCommits
+					return countDays, sumCommits, ed
 				}
+			}
+			if d.Before(*ed) {
+				ed = &d
 			}
 			sumCommits += day.ContributionCount
 			countDays++
 		}
 	}
-	return countDays, sumCommits
+	return countDays, sumCommits, ed
 }
 
 func (client Client) execQuery(ctx context.Context, variables map[string]interface{}) Query {
@@ -140,7 +148,7 @@ func (client Client) execQuery(ctx context.Context, variables map[string]interfa
 	return query
 }
 
-func createMessage(todayContributionCount, countDays, total int, userName string) string {
+func createMessage(todayContributionCount, countDays, total int, userName string, ed *time.Time) string {
 	var message string
 	if todayContributionCount == 0 {
 		message = "<!channel> 今日はまだコミットしていません！"
@@ -153,7 +161,7 @@ func createMessage(todayContributionCount, countDays, total int, userName string
 	} else {
 		average = float64(total) / float64(countDays)
 	}
-	message += fmt.Sprintf("\n連続コミット日数は%d\n合計コミット数は%d\n平均コミット数は%f\nhttps://github.com/%s", countDays, total, average, userName)
+	message += fmt.Sprintf("\n連続コミット日数は%d\n合計コミット数は%d\n平均コミット数は%f\n期間は%s ~\nhttps://github.com/%s", countDays, total, average, ed.Format("2006-01-02"), userName)
 	return message
 }
 
