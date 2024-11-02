@@ -68,7 +68,7 @@ func main() {
 
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 
-	result := Result{userName: userName, todayContributionCount: 0, today: today, start: today, latestDay: today, total: 0, streak: 0, isContinue: true}
+	result := Result{userName: userName, todayContributionCount: 0, today: today, start: today, latestDay: today.AddDate(0, 0, 1), total: 0, streak: 0, isContinue: true}
 
 	slackClient := SlackClient{slack.New(os.Getenv("SLACK_BOT_TOKEN"))}
 	if err := result.countOverAYear(userName, graphqlClient); err != nil {
@@ -82,8 +82,8 @@ func main() {
 
 func (r *Result) countOverAYear(userName string, graphqlClient *githubv4.Client) error {
 	for i := 0; r.isContinue; i++ {
-		from := githubv4.DateTime{Time: r.latestDay.AddDate(0, 0, -366)}
-		to := githubv4.DateTime{Time: r.latestDay.AddDate(0, 0, -1)}
+		from := githubv4.DateTime{Time: r.latestDay.AddDate(0, 0, -365)}
+		to := githubv4.DateTime{Time: r.latestDay.AddDate(0, 0, 0)}
 		variables := map[string]interface{}{
 			"name": githubv4.String(userName),
 			"from": githubv4.DateTime(from),
