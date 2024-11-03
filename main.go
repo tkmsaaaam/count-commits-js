@@ -71,7 +71,7 @@ func main() {
 	result := Result{userName: userName, todayContributionCount: 0, today: today, start: today, latestDay: today.AddDate(0, 0, 1), total: 0, streak: 0, isContinue: true}
 
 	slackClient := SlackClient{slack.New(os.Getenv("SLACK_BOT_TOKEN"))}
-	if err := result.countOverAYear(userName, graphqlClient); err != nil {
+	if err := result.countOverAYear(graphqlClient); err != nil {
 		slackClient.postSlackError()
 		return
 	}
@@ -80,12 +80,12 @@ func main() {
 	slackClient.postSlack(message)
 }
 
-func (r *Result) countOverAYear(userName string, graphqlClient *githubv4.Client) error {
+func (r *Result) countOverAYear(graphqlClient *githubv4.Client) error {
 	for i := 0; r.isContinue; i++ {
 		from := githubv4.DateTime{Time: r.latestDay.AddDate(0, 0, -365)}
 		to := githubv4.DateTime{Time: r.latestDay.AddDate(0, 0, 0)}
 		variables := map[string]interface{}{
-			"name": githubv4.String(userName),
+			"name": githubv4.String(r.userName),
 			"from": githubv4.DateTime(from),
 			"to":   githubv4.DateTime(to),
 		}
@@ -110,11 +110,13 @@ func (r *Result) countCommittedDays(query Query) error {
 			if d.After(r.today) || d.After(r.latestDay) || d.Equal(r.latestDay) {
 				continue
 			}
-			if !d.Equal(r.latestDay.AddDate(0, 0, -1)) {
-				return fmt.Errorf("is not consecutive")
+			expected := r.latestDay.AddDate(0, 0, -1)
+			if !d.Equal(expected) {
+				return fmt.Errorf("is not consecutive expected %s, but %s", expected, d)
 			}
 			if day.ContributionCount == 0 {
 				if d.Equal(r.today) {
+					r.latestDay = d
 					continue
 				} else {
 					r.isContinue = false

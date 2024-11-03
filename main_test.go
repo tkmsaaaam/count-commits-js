@@ -37,19 +37,11 @@ func TestCountOverAYear(t *testing.T) {
 	todayAndYesterDayAreOneJson, _ := testData.ReadFile("testdata/CountOverAYear/todayAndYesterdayAreOne.json")
 	todayAndYesterDayAreOne := make([][]byte, 0)
 	todayAndYesterDayAreOne = append(todayAndYesterDayAreOne, todayAndYesterDayAreOneJson)
-	allOneJson, _ := testData.ReadFile("testdata/CountOverAYear/allOne.json")
-	overAYear := make([][]byte, 0)
-	overAYear = append(overAYear, allOneJson)
-	overAYear = append(overAYear, todayAndYesterDayAreOneJson)
-
-	ed := time.Date(2022, 12, 31, 0, 0, 0, 0, time.Local)
-	ed2 := time.Date(2023, 1, 2, 0, 0, 0, 0, time.Local)
 
 	tests := []struct {
 		name                       string
 		args                       args
 		queryStr                   [][]byte
-		ed                         *time.Time
 		wantTodayContributionCount int
 		wantCountDays              int
 		wantED                     time.Time
@@ -58,46 +50,33 @@ func TestCountOverAYear(t *testing.T) {
 			name:                       "todayAndYesterdayAreZero",
 			args:                       args{userName: "octocat"},
 			queryStr:                   todayAndYesterDayArezero,
-			ed:                         &ed,
 			wantTodayContributionCount: 0,
 			wantCountDays:              0,
-			wantED:                     time.Date(2022, 12, 31, 0, 0, 0, 0, time.Local),
+			wantED:                     time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
 		},
 		{
 			name:                       "todayIsZeroYesterdayIsOne",
 			args:                       args{userName: "octocat"},
 			queryStr:                   todayIsZeroYesterdayIsOne,
-			ed:                         &ed,
-			wantTodayContributionCount: 0,
-			wantCountDays:              362,
-			wantED:                     time.Date(2022, 12, 31, 0, 0, 0, 0, time.Local),
+			wantTodayContributionCount: 1,
+			wantCountDays:              363,
+			wantED:                     time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
 		},
 		{
 			name:                       "todayIsOne",
 			args:                       args{userName: "octocat"},
 			queryStr:                   todayIsOne,
-			ed:                         &ed2,
 			wantTodayContributionCount: 1,
 			wantCountDays:              1,
-			wantED:                     time.Date(2023, 1, 2, 0, 0, 0, 0, time.Local),
+			wantED:                     time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
 		},
 		{
 			name:                       "todayAndYesterDayAreOne",
 			args:                       args{userName: "octocat"},
 			queryStr:                   todayAndYesterDayAreOne,
 			wantTodayContributionCount: 1,
-			ed:                         &ed,
-			wantCountDays:              363,
-			wantED:                     time.Date(2022, 12, 31, 0, 0, 0, 0, time.Local),
-		},
-		{
-			name:                       "overAYear",
-			args:                       args{userName: "octocat"},
-			queryStr:                   overAYear,
-			wantTodayContributionCount: 1,
-			ed:                         &ed,
-			wantCountDays:              727,
-			wantED:                     time.Date(2022, 12, 31, 0, 0, 0, 0, time.Local),
+			wantCountDays:              364,
+			wantED:                     time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
 		},
 	}
 	for _, tt := range tests {
@@ -109,15 +88,20 @@ func TestCountOverAYear(t *testing.T) {
 			i++
 		})
 		t.Run(tt.name, func(t *testing.T) {
-			gotTodayContributionCount, gotCountDays, _, ed := countOverAYear(tt.args.userName, client, time.Date(2023, 1, 3, 12, 0, 0, 0, time.Local), tt.ed)
-			if gotTodayContributionCount != tt.wantTodayContributionCount {
-				t.Errorf("add() = %v, want %v", gotTodayContributionCount, tt.wantTodayContributionCount)
+			log.Println(tt.name)
+			r := &Result{userName: tt.args.userName, today: time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC), start: time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC), latestDay: time.Date(2023, 1, 4, 0, 0, 0, 0, time.UTC), isContinue: true}
+			err := r.countOverAYear(client)
+			if err != nil {
+				t.Errorf("countOverAYear() err = %v", err)
 			}
-			if gotCountDays != tt.wantCountDays {
-				t.Errorf("add() = %v, want %v", gotCountDays, tt.wantCountDays)
+			if r.todayContributionCount != tt.wantTodayContributionCount {
+				t.Errorf("countOverAYear() todayContributionCount = %v, want %v", r.todayContributionCount, tt.wantTodayContributionCount)
 			}
-			if *ed != tt.wantED {
-				t.Errorf("add() = %v, want %v", ed, tt.wantED)
+			if r.streak != tt.wantCountDays {
+				t.Errorf("countOverAYear() streak = %v, want %v", r.streak, tt.wantCountDays)
+			}
+			if r.start != tt.wantED {
+				t.Errorf("countOverAYear() start = %v, want %v", r.start, tt.wantED)
 			}
 		})
 	}
@@ -238,138 +222,101 @@ func (localRoundTripper localRoundTripper) RoundTrip(req *http.Request) (*http.R
 	return ressponseRecorder.Result(), nil
 }
 
-func TestIsContinue(t *testing.T) {
-	type args struct {
-		i         int
-		lastCount int
-	}
-
-	tests := []struct {
-		name string
-		args args
-		want bool
-	}{
-		{
-			name: "IIsZero",
-			args: args{i: 0, lastCount: 0},
-			want: true,
-		},
-		{
-			name: "LastCountIsZero",
-			args: args{i: 1, lastCount: 0},
-			want: false,
-		},
-		{
-			name: "LastCountIsOne",
-			args: args{i: 1, lastCount: 1},
-			want: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := isContinue(tt.args.i, tt.args.lastCount)
-			if got != tt.want {
-				t.Errorf("add() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestCountCommits(t *testing.T) {
 	type args struct {
 		query Query
-		time  *time.Time
 	}
 
-	now := time.Now()
+	now := time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC)
 	today := now.Format("2006-01-02")
 	yesterday := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
 	twoDaysAgo := time.Now().AddDate(0, 0, -2).Format("2006-01-02")
-
-	ed := time.Date(2022, 12, 31, 0, 0, 0, 0, time.Local)
-	ed2 := time.Date(2023, 1, 2, 0, 0, 0, 0, time.Local)
 
 	tests := []struct {
 		name   string
 		args   args
 		want   int
-		wantEd *time.Time
+		wantEd time.Time
 	}{
 		{
 			name:   "queryIsNil",
-			args:   args{query: Query{}, time: nil},
+			args:   args{query: Query{}},
 			want:   0,
-			wantEd: nil,
+			wantEd: now,
 		},
 		{
 			name:   "weeksLengthIsZero",
-			args:   args{query: Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{}}}}}, time: nil},
+			args:   args{query: Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{}}}}}},
 			want:   0,
-			wantEd: nil,
+			wantEd: now,
 		},
 		{
 			name:   "commitsTodayIsZero",
-			args:   args{query: Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 0, Date: today}}}}}}}}, time: nil},
+			args:   args{query: Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 0, Date: today}}}}}}}}},
 			want:   0,
-			wantEd: nil,
+			wantEd: now,
 		},
 		{
 			name:   "countCommitsTodayIsOne",
-			args:   args{query: Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: today}}}}}}}}, time: &ed},
+			args:   args{query: Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: today}}}}}}}}},
 			want:   1,
-			wantEd: &ed,
+			wantEd: now,
 		},
 		{
 			name:   "countCommitsTodayIsTwo",
-			args:   args{query: Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 2, Date: today}}}}}}}}, time: &ed2},
+			args:   args{query: Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 2, Date: today}}}}}}}}},
 			want:   1,
-			wantEd: &ed2,
+			wantEd: now,
 		},
 		{
 			name:   "countCommitsTodayIsZeroAndYesterdayIsOne",
-			args:   args{query: Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: yesterday}, {ContributionCount: 0, Date: today}}}}}}}}, time: &ed2},
-			want:   1,
-			wantEd: &ed2,
+			args:   args{query: Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: yesterday}, {ContributionCount: 0, Date: today}}}}}}}}},
+			want:   0,
+			wantEd: now,
 		},
 		{
 			name:   "countCommitsTodayIsZeroAndStreak",
-			args:   args{query: Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: twoDaysAgo}, {ContributionCount: 1, Date: yesterday}, {ContributionCount: 0, Date: today}}}}}}}}, time: &ed2},
-			want:   2,
-			wantEd: &ed2,
+			args:   args{query: Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: twoDaysAgo}, {ContributionCount: 1, Date: yesterday}, {ContributionCount: 0, Date: today}}}}}}}}},
+			want:   0,
+			wantEd: now,
 		},
 		{
 			name:   "countCommitsTodayIsOneAndStreak",
-			args:   args{query: Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: twoDaysAgo}, {ContributionCount: 1, Date: yesterday}, {ContributionCount: 1, Date: today}}}}}}}}, time: &ed2},
-			want:   3,
-			wantEd: &ed2,
+			args:   args{query: Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: twoDaysAgo}, {ContributionCount: 1, Date: yesterday}, {ContributionCount: 1, Date: today}}}}}}}}},
+			want:   1,
+			wantEd: now,
 		},
 		{
 			name:   "countCommitsTodayIsOneAndYesterdayIsOne",
-			args:   args{query: Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: yesterday}, {ContributionCount: 1, Date: today}}}}}}}}, time: &ed2},
-			want:   2,
-			wantEd: &ed2,
+			args:   args{query: Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: yesterday}, {ContributionCount: 1, Date: today}}}}}}}}},
+			want:   1,
+			wantEd: now,
 		},
 		{
 			name:   "countCommitsTodayIsOneAndYesterdayIsOneInLastWeek",
-			args:   args{query: Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: yesterday}}}, {ContributionDays: []ContributionDay{{ContributionCount: 1, Date: today}}}}}}}}, time: &ed2},
-			want:   2,
-			wantEd: &ed2,
+			args:   args{query: Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: yesterday}}}, {ContributionDays: []ContributionDay{{ContributionCount: 1, Date: today}}}}}}}}},
+			want:   1,
+			wantEd: now,
 		},
 		{
 			name:   "noStreak",
-			args:   args{query: Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: twoDaysAgo}, {ContributionCount: 0, Date: yesterday}, {ContributionCount: 1, Date: today}}}}}}}}, time: &ed2},
+			args:   args{query: Query{User{ContributionsCollection{ContributionCalendar{Weeks: []Week{{ContributionDays: []ContributionDay{{ContributionCount: 1, Date: twoDaysAgo}, {ContributionCount: 0, Date: yesterday}, {ContributionCount: 1, Date: today}}}}}}}}},
 			want:   1,
-			wantEd: &ed2,
+			wantEd: now,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, _, end := countCommittedDays(tt.args.query, now, tt.args.time)
-			if got != tt.want {
-				t.Errorf("add() = %v, want %v", got, tt.want)
+			r := &Result{today: now, latestDay: now.AddDate(0, 0, 1), start: now, isContinue: true}
+			err := r.countCommittedDays(tt.args.query)
+			if err != nil {
+				t.Errorf("countCommittedDays() = %v", err)
 			}
-			if end != tt.wantEd {
-				t.Errorf("add() = %v, want %v", end, tt.wantEd)
+			if r.streak != tt.want {
+				t.Errorf("add() = %v, want %v", r.streak, tt.want)
+			}
+			if r.start != tt.wantEd {
+				t.Errorf("add() = %v, want %v", r.start, tt.wantEd)
 			}
 		})
 	}
@@ -381,10 +328,9 @@ func TestCreateMessage(t *testing.T) {
 		countDays         int
 		total             int
 		userName          string
-		start             *time.Time
 	}
 
-	start := time.Date(2023, 1, 1, 0, 0, 0, 0, time.Local)
+	start := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	tests := []struct {
 		name string
@@ -393,28 +339,29 @@ func TestCreateMessage(t *testing.T) {
 	}{
 		{
 			name: "notCommitedAndNoStreak",
-			args: args{countCommitsToday: 0, countDays: 0, total: 0, userName: "octocat", start: &start},
+			args: args{countCommitsToday: 0, countDays: 0, total: 0, userName: "octocat"},
 			want: "<!channel> 今日はまだコミットしていません！\n連続コミット日数は0\n合計コミット数は0\n平均コミット数は0.000000\n期間は2023-01-01 ~\nhttps://github.com/octocat",
 		},
 		{
 			name: "notCommitedAnd",
-			args: args{countCommitsToday: 0, countDays: 1, total: 1, userName: "octocat", start: &start},
+			args: args{countCommitsToday: 0, countDays: 1, total: 1, userName: "octocat"},
 			want: "<!channel> 今日はまだコミットしていません！\n連続コミット日数は1\n合計コミット数は1\n平均コミット数は1.000000\n期間は2023-01-01 ~\nhttps://github.com/octocat",
 		},
 		{
 			name: "commitedNoStreak",
-			args: args{countCommitsToday: 1, countDays: 0, total: 1, userName: "octocat", start: &start},
+			args: args{countCommitsToday: 1, countDays: 0, total: 1, userName: "octocat"},
 			want: "\n今日のコミット数は1\n連続コミット日数は0\n合計コミット数は1\n平均コミット数は0.000000\n期間は2023-01-01 ~\nhttps://github.com/octocat",
 		},
 		{
 			name: "commited",
-			args: args{countCommitsToday: 1, countDays: 1, total: 1, userName: "octocat", start: &start},
+			args: args{countCommitsToday: 1, countDays: 1, total: 1, userName: "octocat"},
 			want: "\n今日のコミット数は1\n連続コミット日数は1\n合計コミット数は1\n平均コミット数は1.000000\n期間は2023-01-01 ~\nhttps://github.com/octocat",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := createMessage(tt.args.countCommitsToday, tt.args.countDays, tt.args.total, tt.args.userName, tt.args.start); got != tt.want {
+			r := &Result{todayContributionCount: tt.args.countCommitsToday, total: tt.args.total, streak: tt.args.countDays, latestDay: start, userName: tt.args.userName, isContinue: true}
+			if got := r.createMessage(); got != tt.want {
 				t.Errorf("add() = %v, want %v", got, tt.want)
 			}
 		})
