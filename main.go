@@ -49,7 +49,6 @@ type Result struct {
 	userName               string
 	today                  time.Time
 	todayContributionCount int
-	start                  time.Time
 	latestDay              time.Time
 	total                  int
 	streak                 int
@@ -68,7 +67,7 @@ func main() {
 
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 
-	result := Result{userName: userName, todayContributionCount: 0, today: today, start: today, latestDay: today.AddDate(0, 0, 1), total: 0, streak: 0, isContinue: true}
+	result := Result{userName: userName, todayContributionCount: 0, today: today, latestDay: today.AddDate(0, 0, 1), total: 0, streak: 0, isContinue: true}
 
 	slackClient := SlackClient{slack.New(os.Getenv("SLACK_BOT_TOKEN"))}
 	if err := result.countOverAYear(graphqlClient); err != nil {
