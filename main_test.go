@@ -48,6 +48,16 @@ func TestCountOverAYear(t *testing.T) {
 	todayAndYesterDayAreOne := make([][]byte, 0)
 	todayAndYesterDayAreOne = append(todayAndYesterDayAreOne, todayAndYesterDayAreOneJson)
 
+	allOneJson, _ := testData.ReadFile("testdata/CountOverAYear/allOne.json")
+	minusOneYearJson, _ := testData.ReadFile("testdata/CountOverAYear/minusOneYear.json")
+	minusOneYearStartsWithZeroJson, _ := testData.ReadFile("testdata/CountOverAYear/minusOneYearStartsWithZero.json")
+
+	overAYearNotConsecutive := make([][]byte, 0)
+	overAYearNotConsecutive = append(overAYearNotConsecutive, allOneJson, minusOneYearStartsWithZeroJson)
+
+	overAYearConsecutive := make([][]byte, 0)
+	overAYearConsecutive = append(overAYearConsecutive, allOneJson, minusOneYearJson)
+
 	tests := []struct {
 		name     string
 		args     args
@@ -77,6 +87,18 @@ func TestCountOverAYear(t *testing.T) {
 			args:     args{userName: "octocat"},
 			queryStr: todayAndYesterDayAreOne,
 			want:     Want{todayContributionCount: 1, latestDay: time.Date(2022, 1, 5, 0, 0, 0, 0, time.UTC), total: 364, streak: 364, isContinue: false},
+		},
+		{
+			name:     "overAYearNotConsecutive",
+			args:     args{userName: "octocat"},
+			queryStr: overAYearNotConsecutive,
+			want:     Want{todayContributionCount: 1, latestDay: time.Date(2022, 1, 4, 0, 0, 0, 0, time.UTC), total: 365, streak: 365, isContinue: false},
+		},
+		{
+			name:     "overAYearConsecutive",
+			args:     args{userName: "octocat"},
+			queryStr: overAYearConsecutive,
+			want:     Want{todayContributionCount: 1, latestDay: time.Date(2021, 1, 5, 0, 0, 0, 0, time.UTC), total: 729, streak: 729, isContinue: false},
 		},
 	}
 	for _, tt := range tests {
