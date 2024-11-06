@@ -176,7 +176,7 @@ func TestExecQuery(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := Client{client}.execQuery(tt.args.ctx, tt.args.variables)
 			if len(got.User.ContributionsCollection.ContributionCalendar.Weeks) != len(tt.want.User.ContributionsCollection.ContributionCalendar.Weeks) {
-				t.Errorf("add() = %v, want %v", got, tt.want)
+				t.Errorf("execQuery() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -234,7 +234,7 @@ func TestExecQueryError(t *testing.T) {
 			Client{client}.execQuery(tt.args.ctx, tt.args.variables)
 			gotPrint := strings.TrimRight(buf.String(), "\n")
 			if gotPrint != tt.want {
-				t.Errorf("add() = %v, want %v", gotPrint, tt.want)
+				t.Errorf("execQuery() = %v, want %v", gotPrint, tt.want)
 			}
 		})
 	}
@@ -394,7 +394,7 @@ func TestCreateMessage(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &Result{todayContributionCount: tt.args.countCommitsToday, total: tt.args.total, streak: tt.args.countDays, latestDay: start, userName: tt.args.userName, isContinue: true}
 			if got := r.createMessage(); got != tt.want {
-				t.Errorf("add() = %v, want %v", got, tt.want)
+				t.Errorf("createMessage() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -443,7 +443,7 @@ func TestPostSlack(t *testing.T) {
 			SlackClient{client}.postSlack("message")
 			got := strings.TrimRight(buf.String(), "\n")
 			if got != tt.want {
-				t.Errorf("add() = %v, want %v", got, tt.want)
+				t.Errorf("postSlack() = %v, want %v", got, tt.want)
 			}
 		})
 	}
