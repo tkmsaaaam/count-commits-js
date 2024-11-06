@@ -31,73 +31,55 @@ type Want struct {
 }
 
 func TestCountOverAYear(t *testing.T) {
-	type args struct {
-		userName string
-	}
-
 	todayAndYesterDayArezeroJson, _ := testData.ReadFile("testdata/CountOverAYear/todayAndYesterdayAreZero.json")
-	todayAndYesterDayArezero := make([][]byte, 0)
-	todayAndYesterDayArezero = append(todayAndYesterDayArezero, todayAndYesterDayArezeroJson)
 	todayIsOneJson, _ := testData.ReadFile("testdata/CountOverAYear/todayIsOne.json")
-	todayIsOne := make([][]byte, 0)
-	todayIsOne = append(todayIsOne, todayIsOneJson)
 	todayIsZeroYesterdayIsOneJson, _ := testData.ReadFile("testdata/CountOverAYear/todayIsZeroYesterdayIsOne.json")
-	todayIsZeroYesterdayIsOne := make([][]byte, 0)
-	todayIsZeroYesterdayIsOne = append(todayIsZeroYesterdayIsOne, todayIsZeroYesterdayIsOneJson)
 	todayAndYesterDayAreOneJson, _ := testData.ReadFile("testdata/CountOverAYear/todayAndYesterdayAreOne.json")
-	todayAndYesterDayAreOne := make([][]byte, 0)
-	todayAndYesterDayAreOne = append(todayAndYesterDayAreOne, todayAndYesterDayAreOneJson)
 
 	allOneJson, _ := testData.ReadFile("testdata/CountOverAYear/allOne.json")
 	minusOneYearJson, _ := testData.ReadFile("testdata/CountOverAYear/minusOneYear.json")
 	minusOneYearStartsWithZeroJson, _ := testData.ReadFile("testdata/CountOverAYear/minusOneYearStartsWithZero.json")
 
-	overAYearNotConsecutive := make([][]byte, 0)
-	overAYearNotConsecutive = append(overAYearNotConsecutive, allOneJson, minusOneYearStartsWithZeroJson)
-
-	overAYearConsecutive := make([][]byte, 0)
-	overAYearConsecutive = append(overAYearConsecutive, allOneJson, minusOneYearJson)
-
 	tests := []struct {
 		name     string
-		args     args
+		arg      string
 		queryStr [][]byte
 		want     Want
 	}{
 		{
 			name:     "todayAndYesterdayAreZero",
-			args:     args{userName: "octocat"},
-			queryStr: todayAndYesterDayArezero,
+			arg:      "octocat",
+			queryStr: [][]byte{todayAndYesterDayArezeroJson},
 			want:     Want{todayContributionCount: 0, latestDay: time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC), total: 0, streak: 0, isContinue: false},
 		},
 		{
 			name:     "todayIsZeroYesterdayIsOne",
-			args:     args{userName: "octocat"},
-			queryStr: todayIsZeroYesterdayIsOne,
+			arg:      "octocat",
+			queryStr: [][]byte{todayIsZeroYesterdayIsOneJson},
 			want:     Want{todayContributionCount: 1, latestDay: time.Date(2022, 1, 5, 0, 0, 0, 0, time.UTC), total: 363, streak: 363, isContinue: false},
 		},
 		{
 			name:     "todayIsOne",
-			args:     args{userName: "octocat"},
-			queryStr: todayIsOne,
+			arg:      "octocat",
+			queryStr: [][]byte{todayIsOneJson},
 			want:     Want{todayContributionCount: 1, latestDay: time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC), total: 1, streak: 1, isContinue: false},
 		},
 		{
 			name:     "todayAndYesterDayAreOne",
-			args:     args{userName: "octocat"},
-			queryStr: todayAndYesterDayAreOne,
+			arg:      "octocat",
+			queryStr: [][]byte{todayAndYesterDayAreOneJson},
 			want:     Want{todayContributionCount: 1, latestDay: time.Date(2022, 1, 5, 0, 0, 0, 0, time.UTC), total: 364, streak: 364, isContinue: false},
 		},
 		{
 			name:     "overAYearNotConsecutive",
-			args:     args{userName: "octocat"},
-			queryStr: overAYearNotConsecutive,
+			arg:      "octocat",
+			queryStr: [][]byte{allOneJson, minusOneYearStartsWithZeroJson},
 			want:     Want{todayContributionCount: 1, latestDay: time.Date(2022, 1, 4, 0, 0, 0, 0, time.UTC), total: 365, streak: 365, isContinue: false},
 		},
 		{
 			name:     "overAYearConsecutive",
-			args:     args{userName: "octocat"},
-			queryStr: overAYearConsecutive,
+			arg:      "octocat",
+			queryStr: [][]byte{allOneJson, minusOneYearJson},
 			want:     Want{todayContributionCount: 1, latestDay: time.Date(2021, 1, 5, 0, 0, 0, 0, time.UTC), total: 729, streak: 729, isContinue: false},
 		},
 	}
@@ -111,7 +93,7 @@ func TestCountOverAYear(t *testing.T) {
 		})
 		t.Run(tt.name, func(t *testing.T) {
 			log.Println(tt.name)
-			r := &Result{userName: tt.args.userName, today: time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC), latestDay: time.Date(2023, 1, 4, 0, 0, 0, 0, time.UTC), isContinue: true}
+			r := &Result{userName: tt.arg, today: time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC), latestDay: time.Date(2023, 1, 4, 0, 0, 0, 0, time.UTC), isContinue: true}
 			err := r.countOverAYear(client)
 			if err != nil {
 				t.Errorf("countOverAYear() err = %v", err)
