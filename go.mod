@@ -1,11 +1,13 @@
 module github.com/tkmsaaaam/count-commits-js
 
-go 1.21
+go 1.23.0
+
+toolchain go1.24.1
 
 require (
 	github.com/shurcooL/githubv4 v0.0.0-20240727222349-48295856cce7
-	github.com/slack-go/slack v0.15.0
-	golang.org/x/oauth2 v0.23.0
+	github.com/slack-go/slack v0.16.0
+	golang.org/x/oauth2 v0.28.0
 )
 
 require (
