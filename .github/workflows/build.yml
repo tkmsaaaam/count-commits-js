@@ -13,3 +13,4 @@ jobs:
     uses: tkmsaaaam/manage-slack/.github/workflows/reusing_build.yml@main
     with:
       FILE_NAME: main
+      DIR_NAME: ${{ github.workspace }}
